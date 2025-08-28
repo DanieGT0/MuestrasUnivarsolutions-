@@ -1,0 +1,46 @@
+# Backend specific gitignore
+
+# Environment files (CRÍTICO)
+.env*
+!.env.example
+
+# Virtual environments
+venv/
+venv_new/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs
+*.log
+logs/
+
+# Development scripts (temporal)
+check_*.py
+create_*.py
+setup_*.py
+test_*.py
+fix_*.py
+update_*.py
+
+# Backup files
+*.backup
+*.bak
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

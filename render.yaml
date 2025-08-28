@@ -1,0 +1,36 @@
+services:
+  # Backend API
+  - type: web
+    name: muestras-univar-api
+    env: python
+    plan: free
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL_PRODUCTION
+        fromDatabase:
+          name: muestras-univar-db
+          property: connectionString
+      - key: BACKEND_CORS_ORIGINS
+        value: https://muestras-univar-frontend.onrender.com,http://localhost:3000
+
+  # Frontend React
+  - type: web
+    name: muestras-univar-frontend
+    env: static
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://muestras-univar-api.onrender.com/api/v1
+
+databases:
+  - name: muestras-univar-db
+    plan: free
