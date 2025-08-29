@@ -59,6 +59,7 @@ async def add_utf8_header(request: Request, call_next):
     return response
 
 # Configurar CORS usando settings
+print(f"[CORS] Configured origins: {settings.cors_origins}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

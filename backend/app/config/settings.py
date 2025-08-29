@@ -26,16 +26,24 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # React frontend local
         "http://127.0.0.1:3000",
         "http://localhost:8000",  # FastAPI docs local
-        "https://*.onrender.com",  # Render frontend
+        "https://muestras-univar-frontend.onrender.com",  # Frontend en Render
+        "https://*.onrender.com",  # Render frontend wildcard
         "https://*.render.com",    # Render alternativo
     ]
     
     # Variables de entorno para producción
     ENVIRONMENT: str = "development"
     
+    # Variable para forzar CORS en producción
+    CORS_ALLOW_ALL: bool = False
+    
     @property 
     def cors_origins(self) -> List[str]:
         """Parse CORS origins from string or list"""
+        # En producción, permitir todos los orígenes de Render temporalmente
+        if self.ENVIRONMENT == "production" or self.CORS_ALLOW_ALL:
+            return ["*"]
+        
         if isinstance(self.BACKEND_CORS_ORIGINS, str):
             try:
                 return json.loads(self.BACKEND_CORS_ORIGINS)
