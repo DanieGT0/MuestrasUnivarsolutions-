@@ -47,7 +47,7 @@ class User(BaseModel):
     
     @property
     def is_admin(self):
-        return self.role.name == "admin" if self.role else False
+        return self.role.name in ["admin", "administrador"] if self.role else False
     
     @property
     def is_user(self):
