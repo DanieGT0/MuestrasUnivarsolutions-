@@ -1,10 +1,10 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+import { buildApiUrl } from '../config/api';
 
 export const statisticsService = {
   // Obtener estadísticas de un país específico
   async getCountryStatistics(countryCode) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/statistics/country/${countryCode}`);
+      const response = await fetch(buildApiUrl(`/statistics/country/${countryCode}`));
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
@@ -18,7 +18,7 @@ export const statisticsService = {
   // Obtener estadísticas de todos los países
   async getAllCountriesStatistics() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/statistics/all-countries`);
+      const response = await fetch(buildApiUrl('/statistics/all-countries'));
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }

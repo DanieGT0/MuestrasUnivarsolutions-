@@ -1,10 +1,11 @@
 import api from './api';
+import { buildApiUrl } from '../config/api';
 
 export const countriesService = {
   // Obtener todos los países
   async getAll(params = {}) {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/countries');
+      const response = await fetch(buildApiUrl('/countries'));
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }

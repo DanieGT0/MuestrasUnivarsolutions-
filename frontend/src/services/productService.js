@@ -1,8 +1,7 @@
 // src/services/productService.js
 import authService from './authService';
 import ProductAdapter from '../adapters/productAdapter';
-
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+import { buildApiUrl } from '../config/api';
 
 class ProductService {
   async getProducts(params = {}) {
@@ -20,7 +19,7 @@ class ProductService {
       if (params.skip) queryParams.append('skip', params.skip);
       if (params.limit) queryParams.append('limit', params.limit);
 
-      const url = `${API_BASE_URL}/products?${queryParams.toString()}`;
+      const url = `${buildApiUrl('/products')}?${queryParams.toString()}`;
       
       const response = await fetch(url, {
         headers: {
@@ -47,7 +46,7 @@ class ProductService {
         throw new Error('No hay token de acceso');
       }
 
-      const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      const response = await fetch(buildApiUrl(`/products/${productId}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -77,7 +76,7 @@ class ProductService {
       const transformedData = ProductAdapter.toBackendCreate(productData);
       console.log('[ProductService] Transformed product data:', transformedData);
 
-      const response = await fetch(`${API_BASE_URL}/products`, {
+      const response = await fetch(buildApiUrl('/products'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -109,7 +108,7 @@ class ProductService {
       const transformedData = ProductAdapter.toBackendUpdate(productData);
       console.log('[ProductService] Transformed update data:', transformedData);
 
-      const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      const response = await fetch(buildApiUrl(`/products/${productId}`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -136,7 +135,7 @@ class ProductService {
         throw new Error('No hay token de acceso');
       }
 
-      const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      const response = await fetch(buildApiUrl(`/products/${productId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -162,7 +161,7 @@ class ProductService {
         throw new Error('No hay token de acceso');
       }
 
-      const response = await fetch(`${API_BASE_URL}/products/stats/summary`, {
+      const response = await fetch(buildApiUrl('/products/stats/summary'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -187,7 +186,7 @@ class ProductService {
         throw new Error('No hay token de acceso');
       }
 
-      const response = await fetch(`${API_BASE_URL}/products/generate-code`, {
+      const response = await fetch(buildApiUrl('/products/generate-code'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -213,7 +212,7 @@ class ProductService {
         throw new Error('No hay token de acceso');
       }
 
-      const response = await fetch(`${API_BASE_URL}/products/available-countries`, {
+      const response = await fetch(buildApiUrl('/products/available-countries'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
