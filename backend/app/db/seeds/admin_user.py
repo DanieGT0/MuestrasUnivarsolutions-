@@ -25,7 +25,7 @@ def seed_admin_user():
         # Crear usuario administrador
         admin_user = User(
             email="admin@muestrasunivar.com",
-            password_hash=get_password_hash("admin123"),
+            password_hash=get_password_hash("gmZvTiZtA5g31eJl"),
             first_name="Admin",
             last_name="Sistema",
             role_id=admin_role.id,
@@ -35,7 +35,8 @@ def seed_admin_user():
         db.add(admin_user)
         db.commit()
         print("[SEED] Created admin user successfully")
-        print("[SEED] Login: admin@muestrasunivar.com / admin123")
+        print("[SEED] Login: admin@muestrasunivar.com / gmZvTiZtA5g31eJl")
+        print("[SEED] WARNING: Change this password in production!")
         
     except Exception as e:
         db.rollback()

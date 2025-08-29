@@ -23,6 +23,16 @@ def verify_token(token: str):
     """Verificar y decodificar token JWT"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        # Verificar que el token no haya expirado
+        exp_timestamp = payload.get("exp")
+        if exp_timestamp is None:
+            return None
+            
+        # Verificar campos obligatorios
+        if "sub" not in payload:
+            return None
+            
         return payload
     except JWTError:
         return None

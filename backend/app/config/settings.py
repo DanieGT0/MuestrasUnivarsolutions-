@@ -5,16 +5,16 @@ import os
 
 class Settings(BaseSettings):
     # Base de datos - SOLO para desarrollo local
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/muestras_univar"
-    DATABASE_URL_PRODUCTION: Optional[str] = "postgresql://muestras_admin:oElH07aXVcubsA1ShRTeyg6pTB5sPreu@dpg-d2o5oubipnbc73849ca0-a.oregon-postgres.render.com:5432/muestras_univar"
+    DATABASE_URL: str = os.getenv("DATABASE_URL_LOCAL", "postgresql://postgres:password@localhost:5432/muestras_univar")
+    DATABASE_URL_PRODUCTION: Optional[str] = os.getenv("DATABASE_URL_PRODUCTION")
     
     # Configuración de zona horaria
     TIMEZONE: str = "America/El_Salvador"
     
     # Seguridad JWT - USAR VARIABLES DE ENTORNO EN PRODUCCIÓN
-    SECRET_KEY: str = "muestras-univar-secret-key-2025-development"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "muestras-univar-secret-key-2025-development")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     
     # Configuración de la aplicación
     PROJECT_NAME: str = "Muestras Univar API"
@@ -34,16 +34,25 @@ class Settings(BaseSettings):
     # Variables de entorno para producción
     ENVIRONMENT: str = "development"
     
-    # Variable para forzar CORS en producción (temporal para debugging)
-    CORS_ALLOW_ALL: bool = True
+    # Variable para forzar CORS (solo para desarrollo)
+    CORS_ALLOW_ALL: bool = False
     
     @property 
     def cors_origins(self) -> List[str]:
         """Parse CORS origins from string or list"""
-        # En producción, permitir todos los orígenes de Render temporalmente
-        if self.ENVIRONMENT == "production" or self.CORS_ALLOW_ALL:
-            return ["*"]
+        # En producción, usar orígenes específicos por seguridad
+        if self.ENVIRONMENT == "production":
+            if isinstance(self.BACKEND_CORS_ORIGINS, str):
+                try:
+                    return json.loads(self.BACKEND_CORS_ORIGINS)
+                except json.JSONDecodeError:
+                    return [self.BACKEND_CORS_ORIGINS]
+            return self.BACKEND_CORS_ORIGINS
         
+        # Solo permitir todos los orígenes si está explícitamente habilitado
+        if self.CORS_ALLOW_ALL:
+            return ["*"]
+            
         if isinstance(self.BACKEND_CORS_ORIGINS, str):
             try:
                 return json.loads(self.BACKEND_CORS_ORIGINS)

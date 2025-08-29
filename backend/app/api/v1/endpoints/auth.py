@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -8,6 +8,7 @@ from app.config.security import create_access_token, verify_password, verify_tok
 from app.config.settings import settings
 from app.models import User
 from app.schemas.auth import LoginRequest, LoginResponse, UserInfo, TokenData
+from app.core.rate_limit import limiter, check_failed_login_attempts, record_failed_login_attempt, clear_failed_login_attempts, get_remote_address_with_forwarded
 from sqlalchemy.orm import joinedload
 
 router = APIRouter()
@@ -16,11 +17,19 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/login")
 
 @router.post("/login", response_model=LoginResponse)
+@limiter.limit("5/minute")  # Máximo 5 intentos por minuto
 async def login(
+    request: Request,
     login_data: LoginRequest,
     db: Session = Depends(get_db)
 ):
     """Endpoint para iniciar sesión"""
+    
+    # Obtener IP del cliente
+    client_ip = get_remote_address_with_forwarded(request)
+    
+    # Verificar intentos fallidos previos
+    check_failed_login_attempts(client_ip)
     
     # Buscar usuario por email con países asignados
     user = db.query(User).options(
@@ -31,6 +40,8 @@ async def login(
     ).filter(User.email == login_data.email).first()
     
     if not user:
+        # Registrar intento fallido
+        record_failed_login_attempt(client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
@@ -39,6 +50,8 @@ async def login(
     
     # Verificar contraseña
     if not verify_password(login_data.password, user.password_hash):
+        # Registrar intento fallido
+        record_failed_login_attempt(client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
@@ -66,6 +79,9 @@ async def login(
         data=token_data,
         expires_delta=access_token_expires
     )
+    
+    # Limpiar intentos fallidos ya que el login fue exitoso
+    clear_failed_login_attempts(client_ip)
     
     # Actualizar último login
     user.last_login = datetime.utcnow()

@@ -3,8 +3,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 from app.api.deps import get_db
+import re
 
 router = APIRouter()
+
+def validate_country_code(country_code: str) -> None:
+    """Validar formato del código de país"""
+    if not country_code or not re.match(r'^[A-Za-z]{2,3}$', country_code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Código de país debe ser de 2-3 letras solamente"
+        )
 
 @router.get("/country/{country_code}")
 async def get_country_statistics(
@@ -17,6 +26,9 @@ async def get_country_statistics(
     from app.models.category import Category
     from app.models.country import Country
     from sqlalchemy import func
+    
+    # Validar formato del código de país
+    validate_country_code(country_code)
     
     # Verificar que el pais existe
     country = db.query(Country).filter(Country.code == country_code.upper()).first()
@@ -104,6 +116,9 @@ async def delete_country_products(
     from app.models.movement import Movement
     from app.models.country import Country
     
+    # Validar formato del código de país
+    validate_country_code(country_code)
+    
     # Verificar que el pais existe
     country = db.query(Country).filter(Country.code == country_code.upper()).first()
     if not country:
@@ -147,6 +162,9 @@ async def delete_country_movements(
     from app.models.movement import Movement
     from app.models.country import Country
     
+    # Validar formato del código de país
+    validate_country_code(country_code)
+    
     # Verificar que el pais existe
     country = db.query(Country).filter(Country.code == country_code.upper()).first()
     if not country:
@@ -180,6 +198,9 @@ async def delete_all_country_data(
     from app.models.product import Product
     from app.models.movement import Movement
     from app.models.country import Country
+    
+    # Validar formato del código de país
+    validate_country_code(country_code)
     
     # Verificar que el pais existe
     country = db.query(Country).filter(Country.code == country_code.upper()).first()

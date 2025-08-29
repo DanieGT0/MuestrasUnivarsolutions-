@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 from app.config.settings import settings
 from app.config.database import engine
 from app.api.v1.endpoints import auth, products, users, movements, reports, countries, categories, statistics
+from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 # Importar modelos para SQLAlchemy
 from app import models
 from app.models.base import BaseModel
@@ -27,6 +29,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Configurar rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # Custom exception handler for validation errors
 @app.exception_handler(RequestValidationError)

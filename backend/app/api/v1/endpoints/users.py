@@ -20,10 +20,15 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 def create_user(
     user_data: UserCreate,
     user_service: UserService = Depends(get_user_service),
-    current_user_id: Optional[int] = None  # TODO: Implementar autenticaci�n
+    current_user: User = Depends(get_current_user)
 ):
-    """Crear nuevo usuario"""
-    return user_service.create_user(user_data, created_by=current_user_id)
+    """Crear nuevo usuario - Solo administradores"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los administradores pueden crear usuarios"
+        )
+    return user_service.create_user(user_data, created_by=current_user.id)
 
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
@@ -38,9 +43,15 @@ def update_user(
     user_id: int,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
-    current_user_id: Optional[int] = None  # TODO: Implementar autenticaci�n
+    current_user: User = Depends(get_current_user)
 ):
-    """Actualizar usuario"""
+    """Actualizar usuario - Solo administradores o el propio usuario"""
+    if not current_user.is_admin and current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo puedes actualizar tu propio perfil o ser administrador"
+        )
+    
     try:
         from app.repositories.user_repository import UserRepository
         
