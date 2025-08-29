@@ -110,7 +110,7 @@ const Button = ({
 export default function LoginPage({ onLoginSuccess }) {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    email: 'daniel.gomez@univarsolutions.com', // Pre-llenado para testing
+    email: 'admin@muestrasunivar.com', // Pre-llenado para testing
     password: 'admin123'
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -227,7 +227,7 @@ export default function LoginPage({ onLoginSuccess }) {
             }}>
               <div className="text-sm" style={{ color: 'var(--color-primary)' }}>
                 <div className="font-medium mb-1">Credenciales de prueba:</div>
-                <div>📧 daniel.gomez@univarsolutions.com</div>
+                <div>📧 admin@muestrasunivar.com</div>
                 <div>🔒 admin123</div>
               </div>
             </div>
