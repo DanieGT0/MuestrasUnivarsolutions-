@@ -342,7 +342,7 @@ export default function MuestrasUnivarDashboard({ user, onLogout }) {
           ) : activeNav === 'reports' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user' || user?.role === 'commercial') ? (
             <ReportsContainer />
           ) : activeNav === 'settings' && (user?.role === 'administrador' || user?.role === 'admin') ? (
-            <SettingsPage />)
+            <SettingsPage />
           ) : (
             <div className="p-6">
               <div className="max-w-7xl mx-auto">
