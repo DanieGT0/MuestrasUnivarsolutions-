@@ -53,8 +53,15 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Get database URL based on environment"""
-        if self.ENVIRONMENT == "production" and self.DATABASE_URL_PRODUCTION:
-            return self.DATABASE_URL_PRODUCTION
+        # In production, try environment variables in order of preference
+        if self.ENVIRONMENT == "production":
+            # First try standard Render DATABASE_URL
+            render_db_url = os.getenv("DATABASE_URL")
+            if render_db_url:
+                return render_db_url
+            # Then try our custom production URL if it's a valid URL format
+            if self.DATABASE_URL_PRODUCTION and self.DATABASE_URL_PRODUCTION.startswith("postgresql"):
+                return self.DATABASE_URL_PRODUCTION
         return self.DATABASE_URL
 
     class Config:

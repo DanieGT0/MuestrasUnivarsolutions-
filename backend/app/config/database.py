@@ -10,9 +10,11 @@ engine = create_engine(
     echo=settings.DEBUG,  # Mostrar SQL queries en desarrollo
     pool_pre_ping=True,   # Verificar conexión antes de usar
     connect_args={
+        "sslmode": "require"
+    } if "render.com" in settings.database_url else {
         "options": "-c client_encoding=utf8",
         "client_encoding": "utf8"
-    } if not settings.database_url.startswith('postgresql://') else {}  # SSL para Render
+    }
 )
 
 # Crear sesión

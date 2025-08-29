@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { buildApiUrl } from '../../config/api';
 import { Eye, EyeOff, Package, Mail, Lock, AlertCircle } from 'lucide-react';
 
 // Función de login integrada directamente
 const loginToBackend = async (email, password) => {
   try {
-    const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+    const response = await fetch(buildApiUrl('/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
