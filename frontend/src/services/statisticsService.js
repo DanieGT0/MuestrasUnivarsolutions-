@@ -32,7 +32,7 @@ export const statisticsService = {
   // Eliminar productos de un país
   async deleteCountryProducts(countryCode, includeMovements = false) {
     try {
-      const url = `${API_BASE_URL}/api/v1/statistics/country/${countryCode}/products?include_movements=${includeMovements}`;
+      const url = `${buildApiUrl(`/statistics/country/${countryCode}/products`)}?include_movements=${includeMovements}`;
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
@@ -52,7 +52,7 @@ export const statisticsService = {
   // Eliminar movimientos de un país
   async deleteCountryMovements(countryCode) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/statistics/country/${countryCode}/movements`, {
+      const response = await fetch(buildApiUrl(`/statistics/country/${countryCode}/movements`), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export const statisticsService = {
   // Eliminar todos los datos de un país
   async deleteAllCountryData(countryCode) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/statistics/country/${countryCode}/all`, {
+      const response = await fetch(buildApiUrl(`/statistics/country/${countryCode}/all`), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
