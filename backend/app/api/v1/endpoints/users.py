@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.config.database import get_db
+from app.api.v1.endpoints.auth import get_current_user
+from app.models.user import User
 from app.services.user_service import UserService
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
 from app.models.role import Role
@@ -116,9 +118,17 @@ def get_users(
     role_id: Optional[int] = Query(None, description="Filtrar por ID de rol"),
     country_id: Optional[int] = Query(None, description="Filtrar por ID de pais"),
     is_active: Optional[bool] = Query(None, description="Filtrar por estado activo"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    current_user: User = Depends(get_current_user)
 ):
-    """Obtener lista paginada de usuarios con filtros opcionales"""
+    """Obtener lista paginada de usuarios con filtros opcionales - Solo administradores"""
+    # Verificar que el usuario actual es administrador
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los administradores pueden ver la lista de usuarios"
+        )
+    
     result = user_service.get_users(
         skip=skip, 
         limit=limit, 
