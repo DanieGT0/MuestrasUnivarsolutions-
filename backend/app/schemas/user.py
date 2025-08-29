@@ -42,6 +42,7 @@ class CountryInfo(BaseModel):
     
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class RoleInfo(BaseModel):
     id: int
@@ -50,6 +51,7 @@ class RoleInfo(BaseModel):
     
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class CategoryInfo(BaseModel):
     id: int
@@ -58,6 +60,7 @@ class CategoryInfo(BaseModel):
     
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class UserResponse(UserBase):
     id: int
@@ -73,6 +76,7 @@ class UserResponse(UserBase):
     
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class UserListResponse(BaseModel):
     users: List[UserResponse]
