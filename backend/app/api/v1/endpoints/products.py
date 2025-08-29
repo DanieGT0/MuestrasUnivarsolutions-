@@ -8,6 +8,7 @@ from app.api.v1.endpoints.auth import get_current_user
 from app.models.user import User
 from app.models.product import Product
 from app.models.country import Country
+from app.core.role_permissions import RolePermissions, require_module_access
 from app.schemas.product import (
     ProductCreate, 
     ProductUpdate, 
@@ -35,6 +36,7 @@ from app.services.product_service import ProductService
 router = APIRouter()
 
 @router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+@require_module_access("products")
 async def create_product(
     product_data: ProductCreate,
     db: Session = Depends(get_db),
@@ -42,70 +44,35 @@ async def create_product(
 ):
     """
     Crear nuevo producto
-    - Requiere rol: user o admin
-    - Usuarios pueden seleccionar país de sus países asignados
-    - Admins pueden seleccionar cualquier país
+    - Requiere acceso al módulo de productos (admin o user)
+    - Usuarios solo pueden crear productos en sus países asignados
+    - Admins pueden crear productos en cualquier país
     """
     try:
         print(f"[CREATE_PRODUCT] Starting product creation")
         print(f"[CREATE_PRODUCT] User ID: {current_user.id}")
         print(f"[CREATE_PRODUCT] Product data received: {product_data.dict()}")
         
-        # Validar permisos
-        if not (current_user.is_admin or current_user.is_user):
-            print(f"[CREATE_PRODUCT] Permission denied for user {current_user.id}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="No tienes permisos para crear productos"
-            )
-        
-        print(f"[CREATE_PRODUCT] Permissions validated successfully")
-        
-    except Exception as e:
-        print(f"[CREATE_PRODUCT] Error during validation: {str(e)}")
-        print(f"[CREATE_PRODUCT] Error type: {type(e)}")
-        import traceback
-        print(f"[CREATE_PRODUCT] Traceback: {traceback.format_exc()}")
-        raise
-    
-    try:
-        # Validar país seleccionado según el rol del usuario
+        # Validar país seleccionado usando sistema de permisos
         print(f"[CREATE_PRODUCT] Validating country access")
-        print(f"[CREATE_PRODUCT] Is admin: {current_user.is_admin}")
         print(f"[CREATE_PRODUCT] Requested country_id: {product_data.country_id}")
         
-        if current_user.is_admin:
-            # Admin puede crear en cualquier país, solo verificar que el país existe
-            country = db.query(Country).filter(Country.id == product_data.country_id).first()
-            if not country:
-                print(f"[CREATE_PRODUCT] Country not found: {product_data.country_id}")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="País no encontrado"
-                )
-            country_id = product_data.country_id
-            print(f"[CREATE_PRODUCT] Admin validation passed for country: {country.name}")
-        else:
-            # Usuarios normales solo pueden crear en sus países asignados
-            user_country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
-            print(f"[CREATE_PRODUCT] User country IDs: {user_country_ids}")
-            
-            if not user_country_ids:
-                print(f"[CREATE_PRODUCT] User has no assigned countries")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Usuario no tiene países asignados"
-                )
-            
-            if product_data.country_id not in user_country_ids:
-                print(f"[CREATE_PRODUCT] User not authorized for country {product_data.country_id}")
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="No tienes permisos para crear productos en este país"
-                )
-            
-            country_id = product_data.country_id
-            print(f"[CREATE_PRODUCT] User validation passed for country: {country_id}")
+        # Verificar que el país existe
+        country = db.query(Country).filter(Country.id == product_data.country_id).first()
+        if not country:
+            print(f"[CREATE_PRODUCT] Country not found: {product_data.country_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="País no encontrado"
+            )
+        
+        # Verificar permisos de país
+        if not current_user.has_country_access(product_data.country_id):
+            print(f"[CREATE_PRODUCT] User {current_user.id} doesn't have access to country {product_data.country_id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permisos para crear productos en este país"
+            )
         
         print(f"[CREATE_PRODUCT] Country validation completed, proceeding to create product")
         
@@ -115,7 +82,7 @@ async def create_product(
             db=db,
             product_data=product_data,
             user_id=current_user.id,
-            country_id=country_id
+            country_id=product_data.country_id
         )
         print(f"[CREATE_PRODUCT] Product created successfully with ID: {product.id}")
         

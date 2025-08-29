@@ -55,7 +55,7 @@ class User(BaseModel):
     
     @property
     def is_commercial(self):
-        return self.role.name == "commercial" if self.role else False
+        return self.role.name == "comercial" if self.role else False
     
     @property
     def country_ids(self):

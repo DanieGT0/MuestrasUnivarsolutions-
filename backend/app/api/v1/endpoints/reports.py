@@ -16,6 +16,7 @@ from app.schemas.report import (
     TimeGroupBy, AlertLevel, StockStatus
 )
 from app.services.report_service import ReportService
+from app.core.role_permissions import RolePermissions, require_module_access
 
 router = APIRouter()
 
@@ -25,6 +26,7 @@ async def test_reports():
     return {"message": "Reports endpoint working", "status": "ok"}
 
 @router.get("/commercial/stock-by-category", response_model=StockByCategoryResponse)
+@require_module_access("reports")
 async def get_stock_by_category(
     category_id: Optional[int] = Query(None, description="Filtrar por categoria especifica"),
     db: Session = Depends(get_db),
@@ -32,21 +34,14 @@ async def get_stock_by_category(
 ):
     """
     Obtener stock agrupado por categoria
-    - Solo para usuarios comerciales
-    - Muestra solo productos de paises asignados
+    - Para usuarios con acceso a reportes (admin, user, comercial)
+    - Aplica filtros según permisos del usuario
     """
-    # Solo usuarios autenticados pueden acceder (admin, user, commercial)
-    if not (current_user.is_admin or current_user.is_user or current_user.is_commercial):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para acceder a estos reportes"
-        )
+    # Filtrar países según permisos del usuario
+    allowed_country_ids = RolePermissions.filter_countries(current_user)
     
-    # Obtener paises asignados
-    country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
-    
-    # Para usuarios admin, si no tienen países asignados, pueden ver todos
-    if not country_ids and not current_user.is_admin:
+    # Si el usuario no tiene países asignados y requiere filtro, no puede ver nada
+    if allowed_country_ids is not None and not allowed_country_ids:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Usuario no tiene paises asignados"

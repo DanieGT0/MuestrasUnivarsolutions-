@@ -4,28 +4,46 @@ from app.models.role import Role
 from sqlalchemy.exc import IntegrityError
 
 def seed_roles():
-    """Crear rol administrador basico"""
+    """Crear todos los roles del sistema"""
     db = SessionLocal()
     
+    roles_to_create = [
+        {
+            "name": "administrador",
+            "description": "Administrador del sistema - Acceso completo a todos los módulos"
+        },
+        {
+            "name": "user",
+            "description": "Usuario regular - Acceso a productos, movimientos y reportes de países asignados"
+        },
+        {
+            "name": "comercial",
+            "description": "Usuario comercial - Solo acceso a reportes de países y categorías asignadas"
+        }
+    ]
+    
     try:
-        # Verificar si ya existe el rol admin
-        existing_role = db.query(Role).filter(Role.name == "administrador").first()
-        if existing_role:
-            print("[SEED] Admin role already exists, skipping...")
-            return
+        for role_data in roles_to_create:
+            # Verificar si el rol ya existe
+            existing_role = db.query(Role).filter(Role.name == role_data["name"]).first()
+            if existing_role:
+                print(f"[SEED] Role '{role_data['name']}' already exists, skipping...")
+                continue
+                
+            # Crear el rol
+            new_role = Role(
+                name=role_data["name"],
+                description=role_data["description"]
+            )
             
-        # Crear solo rol administrador
-        admin_role = Role(
-            name="administrador",
-            description="Administrador del sistema"
-        )
+            db.add(new_role)
+            print(f"[SEED] Created role '{role_data['name']}' successfully")
         
-        db.add(admin_role)
         db.commit()
-        print("[SEED] Created admin role successfully")
+        print("[SEED] All roles created successfully")
         
     except Exception as e:
         db.rollback()
-        print(f"[SEED] Error creating admin role: {str(e)}")
+        print(f"[SEED] Error creating roles: {str(e)}")
     finally:
         db.close()

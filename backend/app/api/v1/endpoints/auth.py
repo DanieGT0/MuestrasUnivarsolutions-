@@ -9,6 +9,7 @@ from app.config.settings import settings
 from app.models import User
 from app.schemas.auth import LoginRequest, LoginResponse, UserInfo, TokenData
 from app.core.rate_limit import limiter, check_failed_login_attempts, record_failed_login_attempt, clear_failed_login_attempts, get_remote_address_with_forwarded
+from app.core.role_permissions import RolePermissions
 from sqlalchemy.orm import joinedload
 
 router = APIRouter()
@@ -188,3 +189,31 @@ async def get_current_user_info(
         country_codes=current_user.country_codes,
         assigned_countries=[c.name for c in current_user.assigned_countries]
     )
+
+@router.get("/permissions")
+async def get_user_permissions(
+    current_user: User = Depends(get_current_user)
+):
+    """Obtener permisos y módulos disponibles para el usuario actual"""
+    accessible_modules = RolePermissions.get_accessible_modules(current_user)
+    
+    return {
+        "user_id": current_user.id,
+        "role": current_user.role.name if current_user.role else "unknown",
+        "accessible_modules": accessible_modules,
+        "permissions": {
+            "can_access_users": RolePermissions.has_module_access(current_user, "users"),
+            "can_access_products": RolePermissions.has_module_access(current_user, "products"),
+            "can_access_movements": RolePermissions.has_module_access(current_user, "movements"),
+            "can_access_reports": RolePermissions.has_module_access(current_user, "reports"),
+            "can_access_countries": RolePermissions.has_module_access(current_user, "countries"),
+            "can_access_categories": RolePermissions.has_module_access(current_user, "categories"),
+            "can_access_statistics": RolePermissions.has_module_access(current_user, "statistics"),
+        },
+        "filters": {
+            "requires_country_filter": RolePermissions.requires_country_filter(current_user),
+            "requires_category_filter": RolePermissions.requires_category_filter(current_user),
+            "allowed_countries": RolePermissions.filter_countries(current_user),
+            "allowed_categories": RolePermissions.filter_categories(current_user)
+        }
+    }
