@@ -1,36 +1,31 @@
-from app.config.database import get_db
+# -*- coding: utf-8 -*-
+from app.config.database import SessionLocal
 from app.models.role import Role
 from sqlalchemy.exc import IntegrityError
 
 def seed_roles():
-    """Crear roles básicos del sistema"""
-    db = next(get_db())
+    """Crear rol administrador basico"""
+    db = SessionLocal()
     
     try:
-        # Verificar si ya existen roles
-        existing_roles = db.query(Role).count()
-        if existing_roles > 0:
-            print("[SEED] Roles already exist, skipping...")
+        # Verificar si ya existe el rol admin
+        existing_role = db.query(Role).filter(Role.name == "administrador").first()
+        if existing_role:
+            print("[SEED] Admin role already exists, skipping...")
             return
             
-        roles_data = [
-            {"name": "administrador", "description": "Administrador del sistema con acceso completo"},
-            {"name": "manager", "description": "Manager con permisos de gestión limitados"},
-            {"name": "viewer", "description": "Visualizador con permisos de solo lectura"}
-        ]
+        # Crear solo rol administrador
+        admin_role = Role(
+            name="administrador",
+            description="Administrador del sistema"
+        )
         
-        for role_data in roles_data:
-            role = Role(**role_data)
-            db.add(role)
-        
+        db.add(admin_role)
         db.commit()
-        print(f"[SEED] Created {len(roles_data)} roles successfully")
+        print("[SEED] Created admin role successfully")
         
-    except IntegrityError as e:
-        db.rollback()
-        print(f"[SEED] Roles already exist or integrity error: {str(e)}")
     except Exception as e:
         db.rollback()
-        print(f"[SEED] Error creating roles: {str(e)}")
+        print(f"[SEED] Error creating admin role: {str(e)}")
     finally:
         db.close()
