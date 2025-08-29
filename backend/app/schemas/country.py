@@ -23,9 +23,11 @@ class CountryResponse(CountryBase):
     
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class AvailableCountriesResponse(BaseModel):
     countries: List[CountryResponse]
     
     class Config:
         from_attributes = True
+        orm_mode = True

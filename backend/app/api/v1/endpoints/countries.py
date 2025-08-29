@@ -2,10 +2,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from app.api.deps import get_db
+from app.config.database import get_db
 from app.models.country import Country
 from app.schemas.country import CountryCreate, CountryUpdate, CountryResponse
-from app.core.security import get_current_user
+from app.api.v1.endpoints.auth import get_current_user
 from app.models.user import User
 
 router = APIRouter()
