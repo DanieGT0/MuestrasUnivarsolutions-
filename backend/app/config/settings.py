@@ -6,7 +6,7 @@ import os
 class Settings(BaseSettings):
     # Base de datos - SOLO para desarrollo local
     DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/muestras_univar"
-    DATABASE_URL_PRODUCTION: Optional[str] = None
+    DATABASE_URL_PRODUCTION: Optional[str] = "postgresql://muestras_admin:oElH07aXVcubsA1ShRTeyg6pTB5sPreu@dpg-d2o5oubipnbc73849ca0-a.oregon-postgres.render.com:5432/muestras_univar"
     
     # Configuración de zona horaria
     TIMEZONE: str = "America/El_Salvador"
@@ -34,8 +34,8 @@ class Settings(BaseSettings):
     # Variables de entorno para producción
     ENVIRONMENT: str = "development"
     
-    # Variable para forzar CORS en producción
-    CORS_ALLOW_ALL: bool = False
+    # Variable para forzar CORS en producción (temporal para debugging)
+    CORS_ALLOW_ALL: bool = True
     
     @property 
     def cors_origins(self) -> List[str]:
