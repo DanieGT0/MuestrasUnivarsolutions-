@@ -209,6 +209,10 @@ async def get_user_permissions(
             "can_access_countries": RolePermissions.has_module_access(current_user, "countries"),
             "can_access_categories": RolePermissions.has_module_access(current_user, "categories"),
             "can_access_statistics": RolePermissions.has_module_access(current_user, "statistics"),
+            "can_access_idiomas": RolePermissions.has_module_access(current_user, "idiomas"),
+            "can_access_apariencias": RolePermissions.has_module_access(current_user, "apariencias"),
+            "can_access_kardex": RolePermissions.has_module_access(current_user, "kardex"),
+            "can_access_configuracion": RolePermissions.has_module_access(current_user, "configuracion"),
         },
         "filters": {
             "requires_country_filter": RolePermissions.requires_country_filter(current_user),

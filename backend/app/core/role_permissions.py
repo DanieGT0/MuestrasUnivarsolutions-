@@ -13,7 +13,7 @@ class RolePermissions:
     
     Roles y sus permisos:
     - administrador: Acceso completo a todos los módulos
-    - user: Productos, movimientos, reportes (limitado a países asignados)
+    - user: Todos los módulos excepto gestión de usuarios (limitado a países asignados)
     - comercial: Solo reportes (limitado a países y categorías asignadas)
     """
     
@@ -25,18 +25,22 @@ class RolePermissions:
         "reports": "Reportes y estadísticas",
         "countries": "Gestión de países",
         "categories": "Gestión de categorías",
-        "statistics": "Estadísticas del sistema"
+        "statistics": "Estadísticas del sistema",
+        "idiomas": "Configuración de idiomas",
+        "apariencias": "Configuración de apariencias",
+        "kardex": "Kardex de inventario",
+        "configuracion": "Configuración del sistema"
     }
     
     # Permisos por rol
     ROLE_PERMISSIONS = {
         "administrador": {
-            "modules": ["users", "products", "movements", "reports", "countries", "categories", "statistics"],
+            "modules": ["users", "products", "movements", "reports", "countries", "categories", "statistics", "idiomas", "apariencias", "kardex", "configuracion"],
             "country_filter": False,  # No tiene filtro de país
             "category_filter": False  # No tiene filtro de categoría
         },
         "user": {
-            "modules": ["products", "movements", "reports", "countries", "categories", "statistics"],
+            "modules": ["products", "movements", "reports", "categories", "statistics", "idiomas", "apariencias", "kardex", "configuracion"],
             "country_filter": True,   # Filtrado por países asignados
             "category_filter": False  # Ve todas las categorías
         },
