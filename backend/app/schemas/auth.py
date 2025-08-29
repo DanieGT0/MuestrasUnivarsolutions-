@@ -37,5 +37,5 @@ class TokenData(BaseModel):
     category_id: Optional[int] = None
     country_ids: List[int] = []  # Nuevos países asignados
 
-# Actualizar referencia forward
-LoginResponse.model_rebuild()
+# Actualizar referencia forward - compatible con Pydantic 1.10
+LoginResponse.update_forward_refs()
