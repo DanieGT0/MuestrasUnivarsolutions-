@@ -200,15 +200,15 @@ export default function MuestrasUnivarDashboard({ user, onLogout }) {
   }
 
   const navItems = [
-    { id: 'dashboard', label: t('navigation.dashboard'), icon: <Home className="w-5 h-5" />, roles: ['admin', 'user'] },
-    { id: 'themes', label: t('navigation.themes'), icon: <Palette className="w-5 h-5" />, roles: ['admin', 'user'] },
-    { id: 'languages', label: t('navigation.languages'), icon: <Globe className="w-5 h-5" />, roles: ['admin', 'user'] },
-    { id: 'products', label: t('navigation.products'), icon: <Box className="w-5 h-5" />, roles: ['admin', 'user'] },
-    { id: 'movements', label: t('navigation.movements'), icon: <ArrowUpDown className="w-5 h-5" />, roles: ['admin', 'user'] },
-    { id: 'kardex', label: t('navigation.kardex'), icon: <History className="w-5 h-5" />, roles: ['admin', 'user'] },
-    { id: 'users', label: t('navigation.users'), icon: <Users className="w-5 h-5" />, roles: ['admin'] },
-    { id: 'reports', label: t('navigation.reports'), icon: <FileText className="w-5 h-5" />, roles: ['admin', 'user', 'commercial'] },
-    { id: 'settings', label: t('navigation.settings'), icon: <Settings className="w-5 h-5" />, roles: ['admin'] }
+    { id: 'dashboard', label: t('navigation.dashboard'), icon: <Home className="w-5 h-5" />, roles: ['administrador', 'admin', 'user'] },
+    { id: 'themes', label: t('navigation.themes'), icon: <Palette className="w-5 h-5" />, roles: ['administrador', 'admin', 'user'] },
+    { id: 'languages', label: t('navigation.languages'), icon: <Globe className="w-5 h-5" />, roles: ['administrador', 'admin', 'user'] },
+    { id: 'products', label: t('navigation.products'), icon: <Box className="w-5 h-5" />, roles: ['administrador', 'admin', 'user'] },
+    { id: 'movements', label: t('navigation.movements'), icon: <ArrowUpDown className="w-5 h-5" />, roles: ['administrador', 'admin', 'user'] },
+    { id: 'kardex', label: t('navigation.kardex'), icon: <History className="w-5 h-5" />, roles: ['administrador', 'admin', 'user'] },
+    { id: 'users', label: t('navigation.users'), icon: <Users className="w-5 h-5" />, roles: ['administrador', 'admin'] },
+    { id: 'reports', label: t('navigation.reports'), icon: <FileText className="w-5 h-5" />, roles: ['administrador', 'admin', 'user', 'commercial'] },
+    { id: 'settings', label: t('navigation.settings'), icon: <Settings className="w-5 h-5" />, roles: ['administrador', 'admin'] }
   ]
 
   const stats = [
@@ -323,26 +323,26 @@ export default function MuestrasUnivarDashboard({ user, onLogout }) {
 
         {/* Main Content */}
         <main className="flex-1">
-          {activeNav === 'themes' && (user?.role === 'admin' || user?.role === 'user') ? (
+          {activeNav === 'themes' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user') ? (
             <ThemeManagement />
-          ) : activeNav === 'languages' && (user?.role === 'admin' || user?.role === 'user') ? (
+          ) : activeNav === 'languages' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user') ? (
             <LanguageManagement />
-          ) : activeNav === 'products' && (user?.role === 'admin' || user?.role === 'user') ? (
+          ) : activeNav === 'products' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user') ? (
             <ProductsManagement />
-          ) : activeNav === 'movements' && (user?.role === 'admin' || user?.role === 'user') ? (
+          ) : activeNav === 'movements' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user') ? (
             <div className="p-6">
               <MovementList />
             </div>
-          ) : activeNav === 'kardex' && (user?.role === 'admin' || user?.role === 'user') ? (
+          ) : activeNav === 'kardex' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user') ? (
             <div className="p-6">
               <Kardex />
             </div>
-          ) : activeNav === 'users' ? (
+          ) : activeNav === 'users' && (user?.role === 'administrador' || user?.role === 'admin') ? (
             <UserList />
-          ) : activeNav === 'reports' && (user?.role === 'admin' || user?.role === 'user' || user?.role === 'commercial') ? (
+          ) : activeNav === 'reports' && (user?.role === 'administrador' || user?.role === 'admin' || user?.role === 'user' || user?.role === 'commercial') ? (
             <ReportsContainer />
-          ) : activeNav === 'settings' && user?.role === 'admin' ? (
-            <SettingsPage />
+          ) : activeNav === 'settings' && (user?.role === 'administrador' || user?.role === 'admin') ? (
+            <SettingsPage />)
           ) : (
             <div className="p-6">
               <div className="max-w-7xl mx-auto">
