@@ -84,7 +84,8 @@ const reportService = {
       const params = { limit, offset };
       if (categoryId) params.category_id = categoryId;
       
-      const response = await api.get('/reports/commercial/inventory-table', { params });
+      // Usar endpoint simplificado como alternativa temporal
+      const response = await api.get('/reports/commercial/inventory-table-simplified', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching inventory table:', error);
