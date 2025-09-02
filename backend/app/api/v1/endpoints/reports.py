@@ -331,41 +331,68 @@ async def get_inventory_table(
     - Muestra productos de países y categorías asignados
     - Incluye paginación
     """
-    # Solo usuarios autenticados pueden acceder (admin, user, commercial)
-    if not (current_user.is_admin or current_user.is_user or current_user.is_commercial):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para acceder a estos reportes"
+    try:
+        print(f"[INVENTORY_TABLE] Starting inventory table endpoint")
+        print(f"[INVENTORY_TABLE] User ID: {current_user.id}")
+        print(f"[INVENTORY_TABLE] Category ID: {category_id}")
+        print(f"[INVENTORY_TABLE] Limit: {limit}, Offset: {offset}")
+        
+        # Solo usuarios autenticados pueden acceder (admin, user, commercial)
+        if not (current_user.is_admin or current_user.is_user or current_user.is_commercial):
+            print(f"[INVENTORY_TABLE] User doesn't have required permissions")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permisos para acceder a estos reportes"
+            )
+        
+        # Obtener paises asignados
+        country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
+        print(f"[INVENTORY_TABLE] User country IDs: {country_ids}")
+        
+        # Para usuarios admin, si no tienen países asignados, pueden ver todos
+        if not country_ids and not current_user.is_admin:
+            print(f"[INVENTORY_TABLE] User has no assigned countries")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Usuario no tiene paises asignados"
+            )
+        
+        # Si es admin sin países asignados, pasar None para ver todos
+        if not country_ids and current_user.is_admin:
+            country_ids = None
+            print(f"[INVENTORY_TABLE] Admin user, allowing all countries")
+        
+        # Obtener datos de inventario
+        print(f"[INVENTORY_TABLE] Calling ReportService.get_commercial_inventory_table")
+        inventory_data = ReportService.get_commercial_inventory_table(
+            db=db,
+            country_ids=country_ids,
+            category_id=category_id,
+            limit=limit,
+            offset=offset
         )
-    
-    # Obtener paises asignados
-    country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
-    
-    # Para usuarios admin, si no tienen países asignados, pueden ver todos
-    if not country_ids and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Usuario no tiene paises asignados"
+        print(f"[INVENTORY_TABLE] Retrieved {len(inventory_data['products'])} products")
+        
+        response = InventoryTableResponse(
+            products=[InventoryTableItem(**item) for item in inventory_data["products"]],
+            total_count=inventory_data["total_count"],
+            page_info=PageInfo(**inventory_data["page_info"])
         )
-    
-    # Si es admin sin países asignados, pasar None para ver todos
-    if not country_ids and current_user.is_admin:
-        country_ids = None
-    
-    # Obtener datos de inventario
-    inventory_data = ReportService.get_commercial_inventory_table(
-        db=db,
-        country_ids=country_ids,
-        category_id=category_id,
-        limit=limit,
-        offset=offset
-    )
-    
-    return InventoryTableResponse(
-        products=[InventoryTableItem(**item) for item in inventory_data["products"]],
-        total_count=inventory_data["total_count"],
-        page_info=PageInfo(**inventory_data["page_info"])
-    )
+        print(f"[INVENTORY_TABLE] Returning response successfully")
+        return response
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        print(f"[INVENTORY_TABLE] Unexpected error: {str(e)}")
+        print(f"[INVENTORY_TABLE] Error type: {type(e)}")
+        import traceback
+        print(f"[INVENTORY_TABLE] Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
 
 @router.get("/commercial/inventory-rotation")
 async def get_inventory_rotation_metrics(
