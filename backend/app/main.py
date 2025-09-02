@@ -65,10 +65,13 @@ async def add_utf8_header(request: Request, call_next):
     return response
 
 # Middleware para manejar redirecciones y CORS en producción
-@app.middleware("http")
+@app.middleware("http") 
 async def handle_cors_redirects(request: Request, call_next):
+    print(f"[CORS_MIDDLEWARE] Processing {request.method} request to {request.url}")
+    
     # Manejar preflight OPTIONS requests
     if request.method == "OPTIONS":
+        print("[CORS_MIDDLEWARE] Handling OPTIONS preflight request")
         from fastapi.responses import Response
         return Response(
             status_code=200,
@@ -77,32 +80,52 @@ async def handle_cors_redirects(request: Request, call_next):
                 "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD",
                 "Access-Control-Allow-Headers": "*",
                 "Access-Control-Max-Age": "86400",
-                "Access-Control-Allow-Credentials": "true"
+                "Access-Control-Allow-Credentials": "false"
             }
         )
     
     # Procesar request normal
     try:
         response = await call_next(request)
+        print(f"[CORS_MIDDLEWARE] Response status: {response.status_code}")
         
-        # Agregar headers CORS a todas las respuestas
+        # Forzar headers CORS en TODAS las respuestas
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD"
         response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        response.headers["Vary"] = "Origin"
         
+        print(f"[CORS_MIDDLEWARE] Added CORS headers to response")
         return response
     except Exception as e:
         print(f"[CORS_MIDDLEWARE] Error: {str(e)}")
-        raise
+        # Aún en caso de error, devolver respuesta con CORS headers
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD",
+                "Access-Control-Allow-Headers": "*"
+            }
+        )
 
 # Configurar CORS usando settings
 print(f"[CORS] Configured origins: {settings.cors_origins}")
 print(f"[CORS] Environment: {settings.ENVIRONMENT}")
 print(f"[CORS] Allow all: {settings.CORS_ALLOW_ALL}")
 
-# En producción, usar configuración más permisiva para resolver problemas CORS
-cors_origins = ["*"] if settings.ENVIRONMENT == "production" else settings.cors_origins
+# Forzar CORS permisivo para resolver problemas en producción
+# Detectar si estamos en Render por la URL de la base de datos o variables de entorno
+is_production = (
+    settings.ENVIRONMENT == "production" or 
+    "onrender.com" in os.getenv("DATABASE_URL", "") or
+    os.getenv("RENDER") == "true"
+)
+
+cors_origins = ["*"] if is_production else settings.cors_origins
 
 print(f"[CORS] Final origins being used: {cors_origins}")
 
