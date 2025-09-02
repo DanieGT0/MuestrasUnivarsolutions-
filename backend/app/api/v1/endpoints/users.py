@@ -85,6 +85,10 @@ def update_user(
         if user_data.country_ids is not None:
             user = user_repo.assign_countries(user, user_data.country_ids)
         
+        # Actualizar categorías asignadas
+        if hasattr(user_data, 'category_ids') and user_data.category_ids is not None:
+            user = user_repo.assign_categories(user, user_data.category_ids)
+        
         # Guardar cambios
         user = user_repo.update(user)
         
@@ -96,13 +100,15 @@ def update_user(
             "is_active": user.is_active,
             "role": {"id": user.role.id, "name": user.role.name} if user.role else None,
             "assigned_countries": [{"id": c.id, "name": c.name, "code": c.code} for c in user.assigned_countries],
+            "assigned_categories": [{"id": c.id, "name": c.name} for c in user.assigned_categories],
             "category": {"id": user.category.id, "name": user.category.name} if user.category else None,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "updated_at": user.updated_at.isoformat() if user.updated_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None,
             "full_name": user.full_name,
             "country_ids": [c.id for c in user.assigned_countries],
-            "country_codes": [c.code for c in user.assigned_countries]
+            "country_codes": [c.code for c in user.assigned_countries],
+            "category_ids": [c.id for c in user.assigned_categories]
         }
         
     except HTTPException:
@@ -233,4 +239,43 @@ def assign_countries_to_user(
         
     except Exception as e:
         print(f"Error assigning countries: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/{user_id}/assign-categories")
+def assign_categories_to_user(
+    user_id: int,
+    category_ids: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Asignar categorías a un usuario comercial - Solo administradores"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los administradores pueden asignar categorías"
+        )
+        
+    try:
+        from app.repositories.user_repository import UserRepository
+        
+        user_repo = UserRepository(db)
+        user = user_repo.get_by_id(user_id)
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        # Obtener category_ids del body
+        category_id_list = category_ids.get("category_ids", [])
+        
+        # Asignar categorías
+        user = user_repo.assign_categories(user, category_id_list)
+        
+        return {
+            "message": "Categorías asignadas exitosamente", 
+            "user_id": user_id,
+            "assigned_categories": [{"id": c.id, "name": c.name} for c in user.assigned_categories]
+        }
+        
+    except Exception as e:
+        print(f"Error assigning categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))

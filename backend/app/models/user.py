@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 from .user_country import user_countries_table
+from .user_category import user_categories_table
 
 class User(BaseModel):
     __tablename__ = "users"
@@ -41,6 +42,13 @@ class User(BaseModel):
         back_populates="assigned_users"
     )
     
+    # Relación many-to-many con categorías asignadas
+    assigned_categories = relationship(
+        "Category",
+        secondary=user_categories_table,
+        back_populates="assigned_users"
+    )
+    
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -67,11 +75,27 @@ class User(BaseModel):
         """Obtener códigos de países asignados"""
         return [country.code for country in self.assigned_countries]
     
+    @property
+    def category_ids(self):
+        """Obtener IDs de categorías asignadas"""
+        return [category.id for category in self.assigned_categories]
+    
+    @property
+    def category_names(self):
+        """Obtener nombres de categorías asignadas"""
+        return [category.name for category in self.assigned_categories]
+    
     def has_country_access(self, country_id):
         """Verificar si el usuario tiene acceso a un país específico"""
         if self.is_admin:
             return True  # Admin puede acceder a todos los países
         return country_id in self.country_ids
+    
+    def has_category_access(self, category_id):
+        """Verificar si el usuario tiene acceso a una categoría específica"""
+        if self.is_admin:
+            return True  # Admin puede acceder a todas las categorías
+        return category_id in self.category_ids
     
     def __repr__(self):
         return f"<User {self.email}>"

@@ -12,7 +12,8 @@ class UserCreate(UserBase):
     password: str
     role_id: int
     country_ids: List[int] = []  # Lista de pa�ses asignados
-    category_id: Optional[int] = None  # Solo para usuarios comerciales
+    category_id: Optional[int] = None  # Solo para usuarios comerciales (backward compatibility)
+    category_ids: List[int] = []  # Lista de categorías asignadas (nuevo)
     
     @validator('country_ids')
     def validate_countries(cls, v):
@@ -20,8 +21,8 @@ class UserCreate(UserBase):
             raise ValueError('Al menos un pais debe ser asignado')
         return v
     
-    @validator('category_id')
-    def validate_category_for_commercial(cls, v, values):
+    @validator('category_ids')
+    def validate_categories_for_commercial(cls, v, values):
         # Esta validaci�n se complementar� en el service layer
         return v
 
@@ -33,6 +34,7 @@ class UserUpdate(BaseModel):
     role_id: Optional[int] = None
     country_ids: Optional[List[int]] = None
     category_id: Optional[int] = None
+    category_ids: Optional[List[int]] = None
     password: Optional[str] = None
 
 class CountryInfo(BaseModel):
@@ -66,6 +68,7 @@ class UserResponse(UserBase):
     id: int
     role: Optional[RoleInfo] = None
     assigned_countries: List[CountryInfo] = []
+    assigned_categories: List[CategoryInfo] = []
     category: Optional[CategoryInfo] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -73,6 +76,7 @@ class UserResponse(UserBase):
     full_name: str
     country_ids: List[int] = []
     country_codes: List[str] = []
+    category_ids: List[int] = []
     
     class Config:
         from_attributes = True

@@ -43,24 +43,39 @@ class UserService:
                 detail="Rol no encontrado"
             )
         
-        # Validar categor�a para usuarios comerciales
-        if role.name == "commercial":
-            if not user_data.category_id:
+        # Validar categorías para usuarios comerciales
+        if role.name in ["commercial", "comercial"]:
+            # Verificar si tiene categorías múltiples o single category
+            has_categories = (hasattr(user_data, 'category_ids') and user_data.category_ids) or user_data.category_id
+            if not has_categories:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Usuarios comerciales deben tener una categor�a asignada"
+                    detail="Usuarios comerciales deben tener al menos una categoría asignada"
                 )
             
-            category = self.db.query(Category).filter(Category.id == user_data.category_id).first()
-            if not category:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Categor�a no encontrada"
-                )
+            # Validar categorías múltiples si existen
+            if hasattr(user_data, 'category_ids') and user_data.category_ids:
+                categories = self.db.query(Category).filter(Category.id.in_(user_data.category_ids)).all()
+                if len(categories) != len(user_data.category_ids):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Una o más categorías no fueron encontradas"
+                    )
+                    
+            # Validar single category si existe (backward compatibility)
+            if user_data.category_id:
+                category = self.db.query(Category).filter(Category.id == user_data.category_id).first()
+                if not category:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Categoría no encontrada"
+                    )
         else:
-            # Solo usuarios comerciales pueden tener categor�a
+            # Solo usuarios comerciales pueden tener categorías
             if user_data.category_id:
                 user_data.category_id = None
+            if hasattr(user_data, 'category_ids'):
+                user_data.category_ids = []
         
         # Crear usuario
         user = User(
@@ -77,9 +92,13 @@ class UserService:
         # Guardar usuario
         user = self.repository.create(user)
         
-        # Asignar pa�ses
+        # Asignar países
         if user_data.country_ids:
             user = self.repository.assign_countries(user, user_data.country_ids)
+        
+        # Asignar categorías múltiples
+        if hasattr(user_data, 'category_ids') and user_data.category_ids:
+            user = self.repository.assign_categories(user, user_data.category_ids)
         
         return UserResponse.from_orm(user)
     

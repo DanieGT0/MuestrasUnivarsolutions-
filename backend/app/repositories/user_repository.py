@@ -15,6 +15,7 @@ class UserRepository:
         return self.db.query(User).options(
             joinedload(User.role),
             joinedload(User.assigned_countries),
+            joinedload(User.assigned_categories),
             joinedload(User.category)
         ).filter(User.id == user_id).first()
     
@@ -23,6 +24,7 @@ class UserRepository:
         return self.db.query(User).options(
             joinedload(User.role),
             joinedload(User.assigned_countries),
+            joinedload(User.assigned_categories),
             joinedload(User.category)
         ).filter(User.email == email).first()
     
@@ -34,6 +36,7 @@ class UserRepository:
         query = self.db.query(User).options(
             joinedload(User.role),
             joinedload(User.assigned_countries),
+            joinedload(User.assigned_categories),
             joinedload(User.category)
         )
         
@@ -101,11 +104,26 @@ class UserRepository:
         self.db.refresh(user)
         return user
     
+    def assign_categories(self, user: User, category_ids: List[int]) -> User:
+        """Asignar categorías a un usuario"""
+        # Limpiar categorías existentes
+        user.assigned_categories.clear()
+        
+        # Asignar nuevas categorías
+        if category_ids:
+            categories = self.db.query(Category).filter(Category.id.in_(category_ids)).all()
+            user.assigned_categories = categories
+        
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+    
     def get_users_by_country(self, country_id: int) -> List[User]:
         """Obtener usuarios asignados a un pa�s espec�fico"""
         return self.db.query(User).options(
             joinedload(User.role),
             joinedload(User.assigned_countries),
+            joinedload(User.assigned_categories),
             joinedload(User.category)
         ).join(User.assigned_countries).filter(
             Country.id == country_id,
@@ -117,6 +135,7 @@ class UserRepository:
         return self.db.query(User).options(
             joinedload(User.role),
             joinedload(User.assigned_countries),
+            joinedload(User.assigned_categories),
             joinedload(User.category)
         ).join(User.role).filter(
             and_(
@@ -132,6 +151,7 @@ class UserRepository:
         return self.db.query(User).options(
             joinedload(User.role),
             joinedload(User.assigned_countries),
+            joinedload(User.assigned_categories),
             joinedload(User.category)
         ).filter(
             or_(

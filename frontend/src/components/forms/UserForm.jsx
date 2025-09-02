@@ -10,7 +10,8 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
     last_name: '',
     role_id: '',
     country_ids: [],
-    category_id: '',
+    category_id: '', // Mantener para backward compatibility
+    category_ids: [], // MÃºltiples categorÃ­as para usuarios comerciales
     is_active: true
   });
   
@@ -43,17 +44,18 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
     loadReferenceData();
   }, []);
 
-  // Cargar datos del usuario si está editando
+  // Cargar datos del usuario si estï¿½ editando
   useEffect(() => {
     if (user) {
       setFormData({
         email: user.email || '',
-        password: '', // No mostrar contraseña existente
+        password: '', // No mostrar contraseï¿½a existente
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         role_id: user.role?.id || '',
         country_ids: user.country_ids || [],
-        category_id: user.category?.id || '',
+        category_id: user.category?.id || '', // Backward compatibility
+        category_ids: user.category_ids || [], // MÃºltiples categorÃ­as
         is_active: user.is_active ?? true
       });
       
@@ -68,9 +70,9 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
     const role = referenceData.roles.find(r => r.id === parseInt(formData.role_id));
     setSelectedRole(role);
     
-    // Limpiar categoría si no es comercial
-    if (role && role.name !== 'commercial') {
-      setFormData(prev => ({ ...prev, category_id: '' }));
+    // Limpiar categorÃ­as si no es comercial
+    if (role && role.name !== 'commercial' && role.name !== 'comercial') {
+      setFormData(prev => ({ ...prev, category_id: '', category_ids: [] }));
     }
   }, [formData.role_id, referenceData.roles]);
 
@@ -98,17 +100,26 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
     }));
   };
 
+  const handleCategoryChange = (categoryId) => {
+    setFormData(prev => ({
+      ...prev,
+      category_ids: prev.category_ids.includes(categoryId)
+        ? prev.category_ids.filter(id => id !== categoryId)
+        : [...prev.category_ids, categoryId]
+    }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
     
     if (!formData.email.trim()) {
       newErrors.email = 'El email es requerido';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = 'Email invï¿½lido';
     }
     
     if (!user && !formData.password.trim()) {
-      newErrors.password = 'La contraseña es requerida para usuarios nuevos';
+      newErrors.password = 'La contraseï¿½a es requerida para usuarios nuevos';
     }
     
     if (!formData.first_name.trim()) {
@@ -124,11 +135,12 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
     }
     
     if (!formData.country_ids.length) {
-      newErrors.country_ids = 'Al menos un país debe ser asignado';
+      newErrors.country_ids = 'Al menos un paï¿½s debe ser asignado';
     }
     
-    if (selectedRole && selectedRole.name === 'commercial' && !formData.category_id) {
-      newErrors.category_id = 'La categoría es requerida para usuarios comerciales';
+    if (selectedRole && (selectedRole.name === 'commercial' || selectedRole.name === 'comercial') && 
+        !formData.category_ids.length && !formData.category_id) {
+      newErrors.category_ids = 'Al menos una categorÃ­a es requerida para usuarios comerciales';
     }
     
     setErrors(newErrors);
@@ -142,20 +154,28 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
       return;
     }
     
-    // Preparar datos para envío
+    // Preparar datos para envï¿½o
     const submitData = { ...formData };
     
-    // Convertir IDs a números
+    // Convertir IDs a nï¿½meros
     submitData.role_id = parseInt(submitData.role_id);
     submitData.country_ids = submitData.country_ids.map(id => parseInt(id));
     
+    // Manejar categorÃ­as mÃºltiples
+    if (submitData.category_ids && submitData.category_ids.length > 0) {
+      submitData.category_ids = submitData.category_ids.map(id => parseInt(id));
+    } else {
+      delete submitData.category_ids;
+    }
+    
+    // Mantener backward compatibility con category_id
     if (submitData.category_id) {
       submitData.category_id = parseInt(submitData.category_id);
     } else {
       delete submitData.category_id;
     }
     
-    // Si es edición y no hay contraseña, no enviarla
+    // Si es ediciï¿½n y no hay contraseï¿½a, no enviarla
     if (user && !submitData.password.trim()) {
       delete submitData.password;
     }
@@ -163,11 +183,11 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
     onSubmit(submitData);
   };
 
-  const isCommercialRole = selectedRole && selectedRole.name === 'commercial';
+  const isCommercialRole = selectedRole && (selectedRole.name === 'commercial' || selectedRole.name === 'comercial');
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Información básica */}
+      {/* Informaciï¿½n bï¿½sica */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -189,7 +209,7 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Contraseña {!user && '*'}
+            Contraseï¿½a {!user && '*'}
           </label>
           <div className="relative">
             <input
@@ -202,7 +222,7 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
                 errors.password ? 'border-red-500' : 'border-gray-300'
               }`}
               disabled={isLoading}
-              placeholder={user ? "Dejar vacío para no cambiar" : ""}
+              placeholder={user ? "Dejar vacï¿½o para no cambiar" : ""}
             />
             <button
               type="button"
@@ -294,37 +314,36 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
         </div>
       </div>
 
-      {/* Categoría para usuarios comerciales */}
+      {/* CategorÃ­as para usuarios comerciales */}
       {isCommercialRole && (
         <div>
-          <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-2">
-            Categoría de Producto *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            CategorÃ­as Asignadas *
           </label>
-          <select
-            id="category_id"
-            name="category_id"
-            value={formData.category_id}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.category_id ? 'border-red-500' : 'border-gray-300'
-            }`}
-            disabled={isLoading}
-          >
-            <option value="">Seleccionar categoría</option>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border rounded-lg">
             {referenceData.categories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name} {category.description && `- ${category.description}`}
-              </option>
+              <label key={category.id} className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.category_ids.includes(category.id)}
+                  onChange={() => handleCategoryChange(category.id)}
+                  className="mr-2"
+                  disabled={isLoading}
+                />
+                <span className="text-sm" title={category.description}>
+                  {category.name}
+                </span>
+              </label>
             ))}
-          </select>
-          {errors.category_id && <p className="text-red-500 text-sm mt-1">{errors.category_id}</p>}
+          </div>
+          {errors.category_ids && <p className="text-red-500 text-sm mt-1">{errors.category_ids}</p>}
         </div>
       )}
 
-      {/* Países asignados */}
+      {/* Paï¿½ses asignados */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Países Asignados *
+          Paï¿½ses Asignados *
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border rounded-lg">
           {referenceData.countries.map(country => (
@@ -343,7 +362,7 @@ const UserForm = ({ user = null, onSubmit, onCancel, isLoading = false }) => {
         {errors.country_ids && <p className="text-red-500 text-sm mt-1">{errors.country_ids}</p>}
       </div>
 
-      {/* Botones de acción */}
+      {/* Botones de acciï¿½n */}
       <div className="flex justify-end space-x-4">
         <button
           type="button"
