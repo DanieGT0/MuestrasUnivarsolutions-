@@ -67,22 +67,34 @@ async def add_utf8_header(request: Request, call_next):
 # Middleware para manejar redirecciones y CORS en producción
 @app.middleware("http")
 async def handle_cors_redirects(request: Request, call_next):
-    # Agregar headers CORS adicionales para manejar redirecciones
+    # Manejar preflight OPTIONS requests
     if request.method == "OPTIONS":
+        from fastapi.responses import Response
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+                "Access-Control-Allow-Credentials": "true"
+            }
+        )
+    
+    # Procesar request normal
+    try:
         response = await call_next(request)
+        
+        # Agregar headers CORS a todas las respuestas
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD"
         response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Max-Age"] = "86400"
+        
         return response
-    
-    response = await call_next(request)
-    
-    # Agregar headers adicionales para production
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    
-    return response
+    except Exception as e:
+        print(f"[CORS_MIDDLEWARE] Error: {str(e)}")
+        raise
 
 # Configurar CORS usando settings
 print(f"[CORS] Configured origins: {settings.cors_origins}")

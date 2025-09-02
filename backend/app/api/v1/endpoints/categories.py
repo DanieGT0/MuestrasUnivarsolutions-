@@ -63,25 +63,39 @@ async def create_category(
     db: Session = Depends(get_db)
 ):
     """Crear una nueva categoria"""
-    # Verificar que el nombre no exista
-    existing_category = db.query(Category).filter(Category.name == category.name.upper()).first()
-    if existing_category:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya existe una categoria con este nombre"
+    try:
+        print(f"[CREATE_CATEGORY] Creating category with data: {category}")
+        
+        # Verificar que el nombre no exista
+        existing_category = db.query(Category).filter(Category.name == category.name.upper()).first()
+        if existing_category:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe una categoria con este nombre"
+            )
+        
+        db_category = Category(
+            name=category.name.upper(),
+            description=category.description,
+            is_active=category.is_active
         )
-    
-    db_category = Category(
-        name=category.name.upper(),
-        description=category.description,
-        is_active=category.is_active
-    )
-    
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    
-    return db_category
+        
+        db.add(db_category)
+        db.commit()
+        db.refresh(db_category)
+        
+        print(f"[CREATE_CATEGORY] Successfully created category {db_category.id}")
+        return db_category
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[CREATE_CATEGORY] Error creating category: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
 
 @router.put("/{category_id}", response_model=CategoryResponse)
 async def update_category(
@@ -90,34 +104,57 @@ async def update_category(
     db: Session = Depends(get_db)
 ):
     """Actualizar una categoria"""
-    db_category = db.query(Category).filter(Category.id == category_id).first()
-    if not db_category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Categoria no encontrada"
-        )
-    
-    # Si se actualiza el nombre, verificar que no exista
-    if category_update.name and category_update.name.upper() != db_category.name:
-        existing_category = db.query(Category).filter(Category.name == category_update.name.upper()).first()
-        if existing_category:
+    try:
+        print(f"[UPDATE_CATEGORY] Updating category {category_id} with data: {category_update}")
+        
+        db_category = db.query(Category).filter(Category.id == category_id).first()
+        if not db_category:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Ya existe una categoria con este nombre"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Categoria no encontrada"
             )
     
-    # Actualizar campos
-    update_data = category_update.dict(exclude_unset=True)
-    if 'name' in update_data:
-        update_data['name'] = update_data['name'].upper()
-    
-    for field, value in update_data.items():
-        setattr(db_category, field, value)
-    
-    db.commit()
-    db.refresh(db_category)
-    
-    return db_category
+        # Si se actualiza el nombre, verificar que no exista
+        if category_update.name and category_update.name.upper() != db_category.name:
+            existing_category = db.query(Category).filter(Category.name == category_update.name.upper()).first()
+            if existing_category:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Ya existe una categoria con este nombre"
+                )
+        
+        # Actualizar campos
+        try:
+            # Soporte para Pydantic v1 y v2
+            if hasattr(category_update, 'model_dump'):
+                update_data = category_update.model_dump(exclude_unset=True)
+            else:
+                update_data = category_update.dict(exclude_unset=True)
+        except Exception as e:
+            print(f"[UPDATE_CATEGORY] Error serializing data: {e}")
+            update_data = {}
+        
+        if 'name' in update_data:
+            update_data['name'] = update_data['name'].upper()
+        
+        for field, value in update_data.items():
+            setattr(db_category, field, value)
+        
+        db.commit()
+        db.refresh(db_category)
+        
+        print(f"[UPDATE_CATEGORY] Successfully updated category {category_id}")
+        return db_category
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[UPDATE_CATEGORY] Error updating category {category_id}: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
 
 @router.delete("/{category_id}")
 async def delete_category(
