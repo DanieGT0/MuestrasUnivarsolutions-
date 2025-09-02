@@ -204,24 +204,39 @@ class MovementService:
     ) -> Movement:
         """Registrar el stock inicial cuando se crea un producto"""
         
-        movement = Movement(
-            tipo=MovementType.INICIAL,
-            cantidad=cantidad_inicial,
-            cantidad_anterior=0,
-            cantidad_nueva=cantidad_inicial,
-            responsable="Sistema",
-            motivo="Stock inicial del producto",
-            observaciones="Registro automatico al crear el producto",
-            fecha_movimiento=MovementService._get_current_time(),
-            product_id=product_id,
-            user_id=user_id
-        )
+        print(f"[MOVEMENT_SERVICE] Creating initial stock movement")
+        print(f"  product_id: {product_id}")
+        print(f"  cantidad_inicial: {cantidad_inicial}")
+        print(f"  user_id: {user_id}")
         
-        db.add(movement)
-        db.commit()
-        db.refresh(movement)
-        
-        return movement
+        try:
+            movement = Movement(
+                tipo=MovementType.INICIAL,
+                cantidad=cantidad_inicial,
+                cantidad_anterior=0,
+                cantidad_nueva=cantidad_inicial,
+                responsable="Sistema",
+                motivo="Stock inicial del producto",
+                observaciones="Registro automatico al crear el producto",
+                fecha_movimiento=MovementService._get_current_time(),
+                product_id=product_id,
+                user_id=user_id
+            )
+            
+            print(f"[MOVEMENT_SERVICE] Movement object created")
+            db.add(movement)
+            print(f"[MOVEMENT_SERVICE] Movement added to session")
+            db.commit()
+            print(f"[MOVEMENT_SERVICE] Movement committed to database")
+            db.refresh(movement)
+            print(f"[MOVEMENT_SERVICE] Movement refreshed, ID: {movement.id}")
+            
+            return movement
+        except Exception as e:
+            print(f"[MOVEMENT_SERVICE] Error creating initial stock: {str(e)}")
+            import traceback
+            print(f"[MOVEMENT_SERVICE] Traceback: {traceback.format_exc()}")
+            raise
     
     @staticmethod
     def get_movements(
@@ -250,10 +265,13 @@ class MovementService:
             query = query.join(Product)
         
         # Filtrar por pa�ses si se especifica (para usuarios no admin)
+        print(f"[MOVEMENT_SERVICE] Applying country filter: {country_ids}")
         if country_ids is not None:
+            print(f"[MOVEMENT_SERVICE] Filtering movements by country_ids: {country_ids}")
             query = query.filter(Product.country_id.in_(country_ids))
         elif filters.country_id:
             # Filtro específico por país (para admins)
+            print(f"[MOVEMENT_SERVICE] Filtering by specific country_id: {filters.country_id}")
             query = query.filter(Product.country_id == filters.country_id)
         
         # Aplicar filtros
@@ -301,7 +319,17 @@ class MovementService:
         query = query.order_by(desc(Movement.fecha_movimiento))
         
         # Paginaci�n
-        return query.offset(skip).limit(limit).all()
+        result = query.offset(skip).limit(limit).all()
+        print(f"[MOVEMENT_SERVICE] Query returned {len(result)} movements")
+        
+        # Debug: mostrar algunos movimientos si los hay
+        if result:
+            for i, movement in enumerate(result[:3]):
+                print(f"[MOVEMENT_SERVICE] Movement {i+1}: ID={movement.id}, tipo={movement.tipo}, product_id={movement.product_id}")
+                if movement.product:
+                    print(f"  Product: {movement.product.codigo} - {movement.product.nombre} (country_id: {movement.product.country_id})")
+        
+        return result
     
     @staticmethod
     def get_movement_by_id(
