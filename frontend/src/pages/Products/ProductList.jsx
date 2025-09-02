@@ -713,7 +713,7 @@ const ProductList = () => {
             <div className="p-6">
               <ProductFormComponent
                 product={editingProduct}
-                onSave={(product) => {
+                onSubmit={async (product) => {
                   setShowForm(false);
                   setEditingProduct(null);
                   loadProducts(currentPage);
