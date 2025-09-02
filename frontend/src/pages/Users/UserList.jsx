@@ -293,7 +293,7 @@ const UserList = () => {
                     Pa�ses Asignados
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Categor�a
+                    Categorías Asignadas
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
@@ -332,8 +332,26 @@ const UserList = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.category ? user.category.name : '-'}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {user.assigned_categories && user.assigned_categories.length > 0 ? (
+                          user.assigned_categories.slice(0, 2).map((category) => (
+                            <span
+                              key={category.id}
+                              className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {category.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 text-sm">-</span>
+                        )}
+                        {user.assigned_categories && user.assigned_categories.length > 2 && (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-200 text-gray-600">
+                            +{user.assigned_categories.length - 2}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(user.is_active)}
