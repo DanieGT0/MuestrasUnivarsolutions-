@@ -159,8 +159,15 @@ async def get_products(
     )
     
     # Determinar país según rol del usuario
+    print(f"[GET_PRODUCTS] User ID: {current_user.id}")
+    print(f"[GET_PRODUCTS] User role: {current_user.role}")
+    print(f"[GET_PRODUCTS] Is admin: {current_user.is_admin}")
+    print(f"[GET_PRODUCTS] Country IDs: {current_user.country_ids}")
+    print(f"[GET_PRODUCTS] Country ID: {current_user.country_id}")
+    
     if current_user.is_admin:
         # Admin puede ver todos los productos o filtrar por país
+        print(f"[GET_PRODUCTS] Admin user - showing all products")
         country_id = None  # Admin puede ver todos
         products, total = ProductService.get_products_for_admin_paginated(
             db=db,
@@ -170,7 +177,9 @@ async def get_products(
         )
     else:
         # Usuarios normales solo ven sus países asignados
+        print(f"[GET_PRODUCTS] Non-admin user - checking country assignments")
         if not current_user.country_ids and not current_user.country_id:
+            print(f"[GET_PRODUCTS] User has no assigned countries - returning error")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Usuario no tiene países asignados"
@@ -189,6 +198,8 @@ async def get_products(
     # Calculate pagination info
     page = (skip // limit) + 1
     total_pages = (total + limit - 1) // limit  # Ceiling division
+    
+    print(f"[GET_PRODUCTS] Returning {len(products)} products out of {total} total")
     
     return PaginatedProductsResponse(
         items=products,

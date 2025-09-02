@@ -20,6 +20,7 @@ class ProductService {
       if (params.limit) queryParams.append('limit', params.limit);
 
       const url = `${buildApiUrl('/products')}?${queryParams.toString()}`;
+      console.log('[ProductService] Request URL:', url);
       
       const response = await fetch(url, {
         headers: {
@@ -28,12 +29,17 @@ class ProductService {
         },
       });
 
+      console.log('[ProductService] Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.log('[ProductService] Error response:', errorData);
         throw new Error(errorData.detail || 'Error al obtener productos');
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('[ProductService] Success response:', data);
+      return data;
     } catch (error) {
       throw error;
     }

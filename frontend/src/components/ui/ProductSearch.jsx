@@ -57,18 +57,23 @@ const ProductSearch = ({
   const loadProducts = async () => {
     try {
       setLoading(true);
+      console.log('[ProductSearch] Loading products...');
       const response = await productService.getProducts();
+      console.log('[ProductSearch] Raw response:', response);
       
       let productList = [];
       if (response && typeof response === 'object' && response.items) {
         productList = response.items;
+        console.log('[ProductSearch] Using response.items, count:', productList.length);
       } else if (Array.isArray(response)) {
         productList = response;
+        console.log('[ProductSearch] Using response array, count:', productList.length);
       }
 
+      console.log('[ProductSearch] Final product list:', productList);
       setProducts(productList);
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('[ProductSearch] Error loading products:', error);
       setError('Error al cargar productos');
     } finally {
       setLoading(false);
