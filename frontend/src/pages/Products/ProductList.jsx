@@ -713,11 +713,25 @@ const ProductList = () => {
             <div className="p-6">
               <ProductFormComponent
                 product={editingProduct}
-                onSubmit={async (product) => {
-                  setShowForm(false);
-                  setEditingProduct(null);
-                  loadProducts(currentPage);
-                  loadStats();
+                onSubmit={async (productData) => {
+                  try {
+                    setLoading(true);
+                    if (editingProduct) {
+                      await productService.updateProduct(editingProduct.id, productData);
+                    } else {
+                      await productService.createProduct(productData);
+                    }
+                    setShowForm(false);
+                    setEditingProduct(null);
+                    await loadProducts(currentPage);
+                    await loadStats();
+                  } catch (err) {
+                    setError(err.message);
+                    console.error('Error saving product:', err);
+                    alert(`Error: ${err.message}`);
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
                 onCancel={() => {
                   setShowForm(false);
