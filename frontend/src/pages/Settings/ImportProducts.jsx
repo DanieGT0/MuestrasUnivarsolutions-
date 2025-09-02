@@ -9,6 +9,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { 
   Card, CardHeader, CardContent, Button, Badge, Alert, ProgressBar 
 } from '../../components/ui';
+import api from '../../services/api';
+import { buildApiUrl } from '../../config/api';
 
 const ImportProducts = () => {
   const { t } = useTranslation();
@@ -40,39 +42,11 @@ const ImportProducts = () => {
 
   const loadCountries = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      if (!token) {
-        console.warn('No access token found - using fallback countries');
-        setCountries([
-          { id: 1, code: 'GT', name: 'Guatemala' },
-          { id: 2, code: 'SV', name: 'El Salvador' },
-          { id: 3, code: 'HN', name: 'Honduras' }
-        ]);
-        return;
-      }
-      
-      const response = await fetch('http://localhost:8000/api/v1/products/available-countries', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const countriesData = await response.json();
-        setCountries(countriesData);
-      } else {
-        const errorText = await response.text();
-        console.error('Error loading countries:', response.status, errorText);
-        setCountries([
-          { id: 1, code: 'GT', name: 'Guatemala' },
-          { id: 2, code: 'SV', name: 'El Salvador' },
-          { id: 3, code: 'HN', name: 'Honduras' }
-        ]);
-      }
+      const response = await api.get('/products/available-countries');
+      setCountries(response.data);
     } catch (error) {
       console.error('Error loading countries:', error);
+      // Fallback countries
       setCountries([
         { id: 1, code: 'GT', name: 'Guatemala' },
         { id: 2, code: 'SV', name: 'El Salvador' },
@@ -83,30 +57,11 @@ const ImportProducts = () => {
 
   const loadCategories = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch('http://localhost:8000/api/v1/categories/', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const categoriesData = await response.json();
-        setCategories(categoriesData);
-      } else {
-        setCategories([
-          { id: 3, name: 'HIC' },
-          { id: 7, name: 'BIC' },
-          { id: 8, name: 'CASE' },
-          { id: 9, name: 'FOOD' },
-          { id: 10, name: 'PHARMA' },
-          { id: 11, name: 'OTROS' }
-        ]);
-      }
+      const response = await api.get('/categories');
+      setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
+      // Fallback categories
       setCategories([
         { id: 3, name: 'HIC' },
         { id: 7, name: 'BIC' },
@@ -390,27 +345,15 @@ const ImportProducts = () => {
 
       setUploadProgress(50);
 
-      const response = await fetch('http://localhost:8000/api/v1/products/bulk-import', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          products: processedProducts,
-          import_mode: importMode,
-          selected_country: selectedCountry ? parseInt(selectedCountry) : null
-        })
+      const response = await api.post('/products/bulk-import', {
+        products: processedProducts,
+        import_mode: importMode,
+        selected_country: selectedCountry ? parseInt(selectedCountry) : null
       });
 
       setUploadProgress(75);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Error en la importación');
-      }
-
-      const results = await response.json();
+      const results = response.data;
       setUploadProgress(100);
 
       let message = `Importación completada:\n`;
