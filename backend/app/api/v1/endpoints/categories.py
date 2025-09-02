@@ -105,39 +105,56 @@ async def update_category(
 ):
     """Actualizar una categoria"""
     try:
-        print(f"[UPDATE_CATEGORY] Updating category {category_id} with data: {category_update}")
+        print(f"[UPDATE_CATEGORY] Updating category {category_id}")
+        print(f"[UPDATE_CATEGORY] Raw data received: {category_update}")
+        print(f"[UPDATE_CATEGORY] Type of data: {type(category_update)}")
         
         db_category = db.query(Category).filter(Category.id == category_id).first()
         if not db_category:
+            print(f"[UPDATE_CATEGORY] Category {category_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Categoria no encontrada"
             )
+            
+        print(f"[UPDATE_CATEGORY] Found category: {db_category.id} - {db_category.name}")
     
         # Si se actualiza el nombre, verificar que no exista
         if category_update.name and category_update.name.upper() != db_category.name:
+            print(f"[UPDATE_CATEGORY] Checking if name '{category_update.name.upper()}' already exists")
             existing_category = db.query(Category).filter(Category.name == category_update.name.upper()).first()
             if existing_category:
+                print(f"[UPDATE_CATEGORY] Name conflict: category {existing_category.id} already has name '{existing_category.name}'")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Ya existe una categoria con este nombre"
                 )
         
         # Actualizar campos
+        print("[UPDATE_CATEGORY] Starting data serialization")
         try:
             # Soporte para Pydantic v1 y v2
             if hasattr(category_update, 'model_dump'):
+                print("[UPDATE_CATEGORY] Using Pydantic v2 model_dump")
                 update_data = category_update.model_dump(exclude_unset=True)
             else:
+                print("[UPDATE_CATEGORY] Using Pydantic v1 dict")
                 update_data = category_update.dict(exclude_unset=True)
+            print(f"[UPDATE_CATEGORY] Serialized data: {update_data}")
         except Exception as e:
             print(f"[UPDATE_CATEGORY] Error serializing data: {e}")
+            print(f"[UPDATE_CATEGORY] Exception type: {type(e)}")
+            import traceback
+            print(f"[UPDATE_CATEGORY] Traceback: {traceback.format_exc()}")
             update_data = {}
         
         if 'name' in update_data:
+            print(f"[UPDATE_CATEGORY] Converting name to uppercase: '{update_data['name']}' -> '{update_data['name'].upper()}'")
             update_data['name'] = update_data['name'].upper()
         
+        print(f"[UPDATE_CATEGORY] Applying updates: {update_data}")
         for field, value in update_data.items():
+            print(f"[UPDATE_CATEGORY] Setting {field} = {value} (type: {type(value)})")
             setattr(db_category, field, value)
         
         db.commit()
