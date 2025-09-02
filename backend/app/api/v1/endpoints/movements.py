@@ -21,6 +21,47 @@ async def test_movements():
     """Endpoint de prueba para verificar que los movimientos funcionan"""
     return {"message": "Movements endpoint working", "status": "ok"}
 
+@router.get("/test-movements-simple")
+async def test_movements_simple(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Endpoint de prueba simple para verificar movimientos"""
+    try:
+        from app.models.movement import Movement
+        from app.models.product import Product
+        
+        # Contar movimientos totales
+        total_movements = db.query(Movement).count()
+        
+        # Obtener algunos movimientos simples
+        movements = db.query(Movement).join(Product).limit(5).all()
+        
+        simple_movements = []
+        for movement in movements:
+            simple_movements.append({
+                "id": movement.id,
+                "tipo": movement.tipo.value if movement.tipo else None,
+                "cantidad": movement.cantidad,
+                "responsable": movement.responsable,
+                "motivo": movement.motivo,
+                "product_codigo": movement.product.codigo if movement.product else "N/A",
+                "product_nombre": movement.product.nombre if movement.product else "N/A"
+            })
+        
+        return {
+            "message": "Simple movements test",
+            "total_movements": total_movements,
+            "sample_movements": simple_movements,
+            "user_countries": current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @router.options("/salida")
 async def salida_options():
     """Handle preflight OPTIONS request for salida endpoint"""
@@ -285,6 +326,7 @@ async def get_movements(
                 return []
         
         # Obtener movimientos
+        print(f"[MOVEMENTS] Calling MovementService.get_movements with country_ids: {country_ids}")
         movements = MovementService.get_movements(
             db=db,
             filters=filters,
@@ -292,6 +334,8 @@ async def get_movements(
             limit=limit,
             country_ids=country_ids
         )
+        
+        print(f"[MOVEMENTS] Retrieved {len(movements)} movements from service")
         
         # Convertir a lista simplificada
         result = []
@@ -311,6 +355,8 @@ async def get_movements(
                 diferencia=movement.diferencia
             ))
         
+        print(f"[MOVEMENTS] Created {len(result)} MovementList objects")
+        print(f"[MOVEMENTS] Returning result with {len(result)} movements")
         return result
         
     except Exception as e:
