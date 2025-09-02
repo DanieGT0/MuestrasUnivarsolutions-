@@ -48,13 +48,13 @@ async def get_stock_by_category(
         )
     
     # Si es admin sin países asignados, pasar None para ver todos
-    if not country_ids and current_user.is_admin:
-        country_ids = None
+    if not allowed_country_ids and current_user.is_admin:
+        allowed_country_ids = None
     
     # Obtener datos
     stock_data = ReportService.get_commercial_stock_by_category(
         db=db,
-        country_ids=country_ids,
+        country_ids=allowed_country_ids,
         category_id=category_id
     )
     

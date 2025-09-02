@@ -27,32 +27,33 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://localhost:8000",  # FastAPI docs local
         "https://muestras-univar-frontend.onrender.com",  # Frontend en Render
-        "https://*.onrender.com",  # Render frontend wildcard
-        "https://*.render.com",    # Render alternativo
+        "https://muestras-univar-api.onrender.com",  # Backend en Render para docs
     ]
     
     # Variables de entorno para producción
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Variable para forzar CORS (solo para desarrollo)
-    CORS_ALLOW_ALL: bool = False
+    CORS_ALLOW_ALL: bool = os.getenv("CORS_ALLOW_ALL", "false").lower() == "true"
     
     @property 
     def cors_origins(self) -> List[str]:
         """Parse CORS origins from string or list"""
-        # En producción, usar orígenes específicos por seguridad
-        if self.ENVIRONMENT == "production":
-            if isinstance(self.BACKEND_CORS_ORIGINS, str):
-                try:
-                    return json.loads(self.BACKEND_CORS_ORIGINS)
-                except json.JSONDecodeError:
-                    return [self.BACKEND_CORS_ORIGINS]
-            return self.BACKEND_CORS_ORIGINS
+        # Verificar si hay orígenes de CORS personalizados desde variables de entorno
+        custom_origins = os.getenv("BACKEND_CORS_ORIGINS")
+        if custom_origins:
+            try:
+                # Intentar parsear como JSON
+                return json.loads(custom_origins)
+            except json.JSONDecodeError:
+                # Si no es JSON, asumir que es una lista separada por comas
+                return [origin.strip() for origin in custom_origins.split(",")]
         
         # Solo permitir todos los orígenes si está explícitamente habilitado
         if self.CORS_ALLOW_ALL:
             return ["*"]
             
+        # Usar configuración por defecto
         if isinstance(self.BACKEND_CORS_ORIGINS, str):
             try:
                 return json.loads(self.BACKEND_CORS_ORIGINS)
