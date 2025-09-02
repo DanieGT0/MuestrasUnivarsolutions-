@@ -4,7 +4,7 @@ export const categoriesService = {
   // Obtener todas las categorías
   async getAll(params = {}) {
     try {
-      const { data } = await api.get('/categories', { params });
+      const { data } = await api.get('/categories/', { params });
       return data;
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -15,7 +15,7 @@ export const categoriesService = {
   // Obtener categorías activas solamente
   async getActive() {
     try {
-      const { data } = await api.get('/categories', { 
+      const { data } = await api.get('/categories/', { 
         params: { active_only: true } 
       });
       return data;
@@ -39,7 +39,7 @@ export const categoriesService = {
   // Crear nueva categoría
   async create(categoryData) {
     try {
-      const { data } = await api.post('/categories', categoryData);
+      const { data } = await api.post('/categories/', categoryData);
       return data;
     } catch (error) {
       console.error('Error creating category:', error);

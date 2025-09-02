@@ -64,22 +64,46 @@ async def add_utf8_header(request: Request, call_next):
     response.headers["Content-Type"] = "application/json; charset=utf-8"
     return response
 
+# Middleware para manejar redirecciones y CORS en producción
+@app.middleware("http")
+async def handle_cors_redirects(request: Request, call_next):
+    # Agregar headers CORS adicionales para manejar redirecciones
+    if request.method == "OPTIONS":
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        return response
+    
+    response = await call_next(request)
+    
+    # Agregar headers adicionales para production
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
+
 # Configurar CORS usando settings
 print(f"[CORS] Configured origins: {settings.cors_origins}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     allow_headers=[
         "Accept",
         "Accept-Language", 
         "Content-Language",
         "Content-Type",
         "Authorization",
-        "X-Requested-With"
+        "X-Requested-With",
+        "Origin",
+        "Cache-Control",
+        "X-File-Name"
     ],
-    expose_headers=["*"]
+    expose_headers=["*"],
+    max_age=86400  # Cache preflight requests for 24 hours
 )
 
 # Incluir rutas de autenticacion
