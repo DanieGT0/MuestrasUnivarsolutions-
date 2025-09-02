@@ -61,6 +61,87 @@ async def test_inventory_simple(
         print(f"[TEST_INVENTORY] Traceback: {traceback.format_exc()}")
         return {"error": str(e), "message": "Test failed"}
 
+@router.get("/commercial/inventory-table-simplified")
+async def get_inventory_table_simplified(
+    category_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Versión simplificada de inventory table sin usar ReportService"""
+    try:
+        print(f"[SIMPLE_INVENTORY] Starting simplified inventory table")
+        
+        from app.models.product import Product
+        from app.models.category import Category
+        from app.models.country import Country
+        
+        # Query básica con joins
+        query = db.query(Product).join(
+            Category, Product.categoria_id == Category.id, isouter=True
+        ).join(
+            Country, Product.country_id == Country.id, isouter=True
+        )
+        
+        # Filtros según usuario
+        if not current_user.is_admin:
+            country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
+            if country_ids:
+                query = query.filter(Product.country_id.in_(country_ids))
+        
+        if category_id:
+            query = query.filter(Product.categoria_id == category_id)
+        
+        # Total count
+        total_count = query.count()
+        
+        # Paginated results
+        products = query.offset(offset).limit(limit).all()
+        
+        # Format response
+        products_data = []
+        for product in products:
+            products_data.append({
+                "product_id": product.id,
+                "codigo": product.codigo,
+                "nombre": product.nombre,
+                "lote": product.lote,
+                "cantidad": product.cantidad,
+                "peso_unitario": product.peso_unitario,
+                "peso_total": product.peso_total,
+                "fecha_registro": product.fecha_registro,
+                "fecha_vencimiento": product.fecha_vencimiento,
+                "proveedor": product.proveedor,
+                "responsable": product.responsable,
+                "categoria_nombre": product.categoria.name if product.categoria else "",
+                "categoria_id": product.categoria_id,
+                "pais_nombre": product.country.name if product.country else "",
+                "pais_id": product.country_id,
+                "comentarios": product.comentarios,
+                "stock_status": "critical" if product.cantidad <= 5 else "warning" if product.cantidad <= 10 else "normal"
+            })
+        
+        return {
+            "products": products_data,
+            "total_count": total_count,
+            "page_info": {
+                "limit": limit,
+                "offset": offset,
+                "has_next": (offset + limit) < total_count,
+                "has_prev": offset > 0
+            }
+        }
+        
+    except Exception as e:
+        print(f"[SIMPLE_INVENTORY] Error: {str(e)}")
+        import traceback
+        print(f"[SIMPLE_INVENTORY] Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error: {str(e)}"
+        )
+
 @router.get("/commercial/stock-by-category", response_model=StockByCategoryResponse)
 @require_module_access("reports")
 async def get_stock_by_category(
