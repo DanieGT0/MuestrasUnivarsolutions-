@@ -37,10 +37,10 @@ const Categories = () => {
     if (!category.name.trim()) {
       newErrors.name = 'El nombre es obligatorio';
     } else if (category.name.length > 100) {
-      newErrors.name = 'El nombre debe tener m�ximo 100 caracteres';
+      newErrors.name = 'El nombre debe tener máximo 100 caracteres';
     }
     
-    // Verificar nombre �nico
+    // Verificar nombre único
     const existingCategory = categories.find(c => 
       c.name.toLowerCase() === category.name.toLowerCase() && 
       c.id !== (editingCategory?.id || 0)
@@ -50,7 +50,7 @@ const Categories = () => {
     }
 
     if (category.description && category.description.length > 500) {
-      newErrors.description = 'La descripci�n debe tener m�ximo 500 caracteres';
+      newErrors.description = 'La descripción debe tener máximo 500 caracteres';
     }
 
     setErrors(newErrors);
@@ -166,22 +166,22 @@ const Categories = () => {
     return (
       <div className="flex items-center justify-center h-48">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Cargando categor�as...</span>
+        <span className="ml-2 text-gray-600">Cargando categorías...</span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header con bot�n crear */}
+      {/* Header con botón crear */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
             <FolderOpen className="h-5 w-5" />
-            <span>Gesti�n de Categor�as</span>
+            <span>Gestión de Categorías</span>
           </h3>
           <p className="text-sm text-gray-600 mt-1">
-            Administre las categor�as de productos del sistema
+            Administre las categorías de productos del sistema
           </p>
         </div>
         
@@ -191,14 +191,14 @@ const Categories = () => {
           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg transition-colors"
         >
           <Plus className="h-4 w-4" />
-          <span>Nueva Categor�a</span>
+          <span>Nueva Categoría</span>
         </button>
       </div>
 
-      {/* Formulario de creaci�n */}
+      {/* Formulario de creación */}
       {isCreating && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-3">Crear Nueva Categor�a</h4>
+          <h4 className="font-medium text-blue-900 mb-3">Crear Nueva Categoría</h4>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -212,7 +212,7 @@ const Categories = () => {
                   className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.name ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="Ej: Qu�micos"
+                  placeholder="Ej: Químicos"
                   maxLength={100}
                 />
                 {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name}</p>}
@@ -235,7 +235,7 @@ const Categories = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripci�n (opcional)
+                Descripción (opcional)
               </label>
               <textarea
                 value={newCategory.description}
@@ -243,7 +243,7 @@ const Categories = () => {
                 className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none ${
                   errors.description ? 'border-red-300' : 'border-gray-300'
                 }`}
-                placeholder="Descripci�n de la categor�a..."
+                placeholder="Descripción de la categoría..."
                 rows={3}
                 maxLength={500}
               />
@@ -273,16 +273,16 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Lista de categor�as */}
+      {/* Lista de categorías */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Categor�a
+                Categoría
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Descripci�n
+                Descripción
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Productos
@@ -336,7 +336,7 @@ const Categories = () => {
                     />
                   ) : (
                     <span className="text-sm text-gray-600 max-w-xs truncate">
-                      {category.description || <em className="text-gray-400">Sin descripci�n</em>}
+                      {category.description || <em className="text-gray-400">Sin descripción</em>}
                     </span>
                   )}
                   {editingCategory?.id === category.id && errors.description && (
@@ -428,28 +428,28 @@ const Categories = () => {
         {categories.length === 0 && (
           <div className="text-center py-8">
             <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No hay categor�as configuradas</p>
+            <p className="text-gray-600">No hay categorías configuradas</p>
             <button
               onClick={startCreate}
               className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
             >
-              Crear la primera categor�a
+              Crear la primera categoría
             </button>
           </div>
         )}
       </div>
 
-      {/* Informaci�n adicional */}
+      {/* Información adicional */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <div className="flex items-start space-x-2">
           <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
           <div className="text-sm">
-            <h4 className="font-medium text-yellow-900 mb-1">Informaci�n importante</h4>
+            <h4 className="font-medium text-yellow-900 mb-1">Información importante</h4>
             <ul className="text-yellow-800 space-y-1 list-disc list-inside">
-              <li>Las categor�as inactivas no aparecer�n en formularios de creaci�n de productos</li>
-              <li>No se puede eliminar una categor�a que tenga productos asociados</li>
-              <li>Durante la importaci�n de Excel, las categor�as que no existan se crear�n autom�ticamente</li>
-              <li>El contador de productos se actualiza autom�ticamente</li>
+              <li>Las categorías inactivas no aparecerán en formularios de creación de productos</li>
+              <li>No se puede eliminar una categoría que tenga productos asociados</li>
+              <li>Durante la importación de Excel, las categorías que no existan se crearán automáticamente</li>
+              <li>El contador de productos se actualiza automáticamente</li>
             </ul>
           </div>
         </div>
