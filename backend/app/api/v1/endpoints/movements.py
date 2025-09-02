@@ -62,6 +62,56 @@ async def test_movements_simple(
             "traceback": traceback.format_exc()
         }
 
+@router.post("/fix-missing-initial-movements")
+async def fix_missing_initial_movements(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Crear movimientos iniciales faltantes para productos que no los tienen"""
+    try:
+        if not current_user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo administradores pueden ejecutar esta función"
+            )
+        
+        from app.models.product import Product
+        from app.models.movement import Movement, MovementType
+        
+        # Encontrar productos sin movimientos iniciales
+        products_without_movements = db.query(Product).filter(
+            ~Product.id.in_(
+                db.query(Movement.product_id).filter(
+                    Movement.tipo == MovementType.INICIAL
+                ).subquery()
+            )
+        ).all()
+        
+        created_movements = 0
+        for product in products_without_movements:
+            # Crear movimiento inicial
+            from app.services.movement_service import MovementService
+            MovementService.create_initial_stock(
+                db=db,
+                product_id=product.id,
+                cantidad_inicial=product.cantidad,
+                user_id=current_user.id
+            )
+            created_movements += 1
+        
+        return {
+            "message": f"Created {created_movements} initial movements",
+            "products_fixed": len(products_without_movements),
+            "created_movements": created_movements
+        }
+        
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @router.options("/salida")
 async def salida_options():
     """Handle preflight OPTIONS request for salida endpoint"""
