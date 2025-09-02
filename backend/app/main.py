@@ -98,22 +98,20 @@ async def handle_cors_redirects(request: Request, call_next):
 
 # Configurar CORS usando settings
 print(f"[CORS] Configured origins: {settings.cors_origins}")
+print(f"[CORS] Environment: {settings.ENVIRONMENT}")
+print(f"[CORS] Allow all: {settings.CORS_ALLOW_ALL}")
+
+# En producción, usar configuración más permisiva para resolver problemas CORS
+cors_origins = ["*"] if settings.ENVIRONMENT == "production" else settings.cors_origins
+
+print(f"[CORS] Final origins being used: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=False if cors_origins == ["*"] else True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language", 
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "Cache-Control",
-        "X-File-Name"
-    ],
+    allow_headers=["*"],
     expose_headers=["*"],
     max_age=86400  # Cache preflight requests for 24 hours
 )
@@ -181,6 +179,11 @@ async def startup_event():
     """Inicializar base de datos y seeds al arrancar"""
     try:
         print("[STARTUP] Initializing database...")
+        
+        # Debug CORS configuration
+        print(f"[STARTUP] CORS Debug - Environment: {settings.ENVIRONMENT}")
+        print(f"[STARTUP] CORS Debug - Settings origins: {settings.cors_origins}")
+        print(f"[STARTUP] CORS Debug - Allow all: {settings.CORS_ALLOW_ALL}")
         
         # Crear todas las tablas
         BaseModel.metadata.create_all(bind=engine)
