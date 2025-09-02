@@ -166,9 +166,8 @@ async def get_products(
     print(f"[GET_PRODUCTS] Country ID: {current_user.country_id}")
     
     if current_user.is_admin:
-        # Admin puede ver todos los productos o filtrar por país
-        print(f"[GET_PRODUCTS] Admin user - showing all products")
-        country_id = None  # Admin puede ver todos
+        # Admin puede ver todos los productos sin restricción de país
+        print(f"[GET_PRODUCTS] Admin user - showing all products without country restriction")
         products, total = ProductService.get_products_for_admin_paginated(
             db=db,
             filters=filters,
@@ -187,6 +186,7 @@ async def get_products(
         
         # Obtener productos de todos los países asignados al usuario
         country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
+        print(f"[GET_PRODUCTS] Non-admin user - filtering by country_ids: {country_ids}")
         products, total = ProductService.get_products_by_countries_paginated(
             db=db,
             country_ids=country_ids,

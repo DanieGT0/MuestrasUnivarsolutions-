@@ -369,10 +369,17 @@ async def get_movements(
         
         # Determinar paises segun rol del usuario
         country_ids = None
-        if not current_user.is_admin:
+        if current_user.is_admin:
+            # Admin puede ver todos los movimientos sin restricción
+            print(f"[MOVEMENTS] Admin user - showing all movements without country restriction")
+            country_ids = None
+        else:
+            # Usuarios normales solo ven movimientos de sus países asignados
             country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
+            print(f"[MOVEMENTS] Non-admin user - filtering by country_ids: {country_ids}")
             if not country_ids:
-                # Si no hay movimientos, devolver lista vacía en lugar de error
+                # Si no hay países asignados, devolver lista vacía en lugar de error
+                print(f"[MOVEMENTS] User has no assigned countries - returning empty list")
                 return []
         
         # Obtener movimientos
