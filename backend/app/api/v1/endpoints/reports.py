@@ -25,6 +25,42 @@ async def test_reports():
     """Endpoint de prueba para verificar que los reportes funcionan"""
     return {"message": "Reports endpoint working", "status": "ok"}
 
+@router.get("/test-inventory-simple")
+async def test_inventory_simple(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Endpoint de prueba simple para inventory sin usar ReportService"""
+    try:
+        print(f"[TEST_INVENTORY] Starting simple test")
+        print(f"[TEST_INVENTORY] User: {current_user.email}")
+        
+        # Consulta simple de productos
+        from app.models.product import Product
+        products = db.query(Product).limit(5).all()
+        print(f"[TEST_INVENTORY] Found {len(products)} products")
+        
+        simple_data = []
+        for product in products:
+            simple_data.append({
+                "id": product.id,
+                "codigo": product.codigo,
+                "nombre": product.nombre,
+                "cantidad": product.cantidad
+            })
+        
+        print(f"[TEST_INVENTORY] Returning {len(simple_data)} products")
+        return {
+            "message": "Simple inventory test successful",
+            "products": simple_data,
+            "total": len(simple_data)
+        }
+    except Exception as e:
+        print(f"[TEST_INVENTORY] Error: {str(e)}")
+        import traceback
+        print(f"[TEST_INVENTORY] Traceback: {traceback.format_exc()}")
+        return {"error": str(e), "message": "Test failed"}
+
 @router.get("/commercial/stock-by-category", response_model=StockByCategoryResponse)
 @require_module_access("reports")
 async def get_stock_by_category(
@@ -364,20 +400,35 @@ async def get_inventory_table(
         
         # Obtener datos de inventario
         print(f"[INVENTORY_TABLE] Calling ReportService.get_commercial_inventory_table")
-        inventory_data = ReportService.get_commercial_inventory_table(
-            db=db,
-            country_ids=country_ids,
-            category_id=category_id,
-            limit=limit,
-            offset=offset
-        )
-        print(f"[INVENTORY_TABLE] Retrieved {len(inventory_data['products'])} products")
+        try:
+            inventory_data = ReportService.get_commercial_inventory_table(
+                db=db,
+                country_ids=country_ids,
+                category_id=category_id,
+                limit=limit,
+                offset=offset
+            )
+            print(f"[INVENTORY_TABLE] Retrieved {len(inventory_data['products'])} products")
+        except Exception as service_error:
+            print(f"[INVENTORY_TABLE] ReportService error: {str(service_error)}")
+            import traceback
+            print(f"[INVENTORY_TABLE] ReportService traceback: {traceback.format_exc()}")
+            raise
         
-        response = InventoryTableResponse(
-            products=[InventoryTableItem(**item) for item in inventory_data["products"]],
-            total_count=inventory_data["total_count"],
-            page_info=PageInfo(**inventory_data["page_info"])
-        )
+        print(f"[INVENTORY_TABLE] Creating InventoryTableResponse")
+        try:
+            response = InventoryTableResponse(
+                products=[InventoryTableItem(**item) for item in inventory_data["products"]],
+                total_count=inventory_data["total_count"],
+                page_info=PageInfo(**inventory_data["page_info"])
+            )
+            print(f"[INVENTORY_TABLE] Response created successfully")
+        except Exception as response_error:
+            print(f"[INVENTORY_TABLE] Response creation error: {str(response_error)}")
+            import traceback
+            print(f"[INVENTORY_TABLE] Response creation traceback: {traceback.format_exc()}")
+            raise
+        
         print(f"[INVENTORY_TABLE] Returning response successfully")
         return response
         
