@@ -157,11 +157,29 @@ async def update_category(
             print(f"[UPDATE_CATEGORY] Setting {field} = {value} (type: {type(value)})")
             setattr(db_category, field, value)
         
+        print("[UPDATE_CATEGORY] Starting database commit")
         db.commit()
+        print("[UPDATE_CATEGORY] Database commit successful")
+        
+        print("[UPDATE_CATEGORY] Refreshing category from database")
         db.refresh(db_category)
+        print(f"[UPDATE_CATEGORY] Refreshed category: {db_category}")
         
         print(f"[UPDATE_CATEGORY] Successfully updated category {category_id}")
-        return db_category
+        print(f"[UPDATE_CATEGORY] Returning category: {db_category.id} - {db_category.name}")
+        
+        # Asegurarse de devolver un objeto válido para CategoryResponse
+        response_data = {
+            "id": db_category.id,
+            "name": db_category.name,
+            "description": db_category.description,
+            "is_active": db_category.is_active,
+            "created_at": db_category.created_at,
+            "updated_at": db_category.updated_at,
+            "product_count": 0  # Set default since it's optional in schema
+        }
+        print(f"[UPDATE_CATEGORY] Response data: {response_data}")
+        return response_data
         
     except HTTPException:
         raise
