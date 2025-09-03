@@ -7,6 +7,7 @@ import MovementsSummaryCard from '../../components/charts/MovementsSummaryCard';
 import InventoryRotationChart from '../../components/charts/InventoryRotationChart';
 import ProductRotationTable from '../../components/charts/ProductRotationTable';
 import ProductsByCountryChart from '../../components/charts/ProductsByCountryChart';
+import StockByCountryChart from '../../components/charts/StockByCountryChart';
 import reportService from '../../services/reportService';
 
 const CommercialDashboard = () => {
@@ -277,19 +278,37 @@ const CommercialDashboard = () => {
             )}
           </div>
           
-          {/* Productos por País */}
-          <div className="flex justify-center">
-            {loading ? (
-              <div className={`rounded-lg shadow-lg p-6 h-96 w-80 flex items-center justify-center ${
-                isDarkMode ? 'glass-card' : 'bg-white'
-              }`}>
-                <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${
-                  isDarkMode ? 'border-blue-400' : 'border-blue-600'
-                }`}></div>
-              </div>
-            ) : (
-              <ProductsByCountryChart />
-            )}
+          {/* Gráficas por País - Productos y Stock */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Productos por País */}
+            <div className="flex justify-center">
+              {loading ? (
+                <div className={`rounded-lg shadow-lg p-6 h-96 w-80 flex items-center justify-center ${
+                  isDarkMode ? 'glass-card' : 'bg-white'
+                }`}>
+                  <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${
+                    isDarkMode ? 'border-blue-400' : 'border-blue-600'
+                  }`}></div>
+                </div>
+              ) : (
+                <ProductsByCountryChart />
+              )}
+            </div>
+            
+            {/* Stock por País */}
+            <div className="flex justify-center">
+              {loading ? (
+                <div className={`rounded-lg shadow-lg p-6 h-96 w-80 flex items-center justify-center ${
+                  isDarkMode ? 'glass-card' : 'bg-white'
+                }`}>
+                  <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${
+                    isDarkMode ? 'border-blue-400' : 'border-blue-600'
+                  }`}></div>
+                </div>
+              ) : (
+                <StockByCountryChart />
+              )}
+            </div>
           </div>
           
           {/* Resumen de Movimientos */}
