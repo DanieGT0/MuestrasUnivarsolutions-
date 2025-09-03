@@ -73,6 +73,15 @@ class MovementResponse(BaseModel):
     user_email: Optional[str] = None
     user_full_name: Optional[str] = None
     
+    @validator('tipo', pre=True)
+    def validate_tipo(cls, v):
+        """Convertir valores de enum a mayúsculas si es necesario"""
+        if isinstance(v, str):
+            return v.upper()
+        elif hasattr(v, 'value'):
+            return v.value.upper()
+        return v
+    
     class Config:
         from_attributes = True
 
@@ -90,6 +99,15 @@ class MovementList(BaseModel):
     product_nombre: str
     user_full_name: str
     diferencia: int  # Calculado: positivo para entradas, negativo para salidas
+    
+    @validator('tipo', pre=True)
+    def validate_tipo(cls, v):
+        """Convertir valores de enum a mayúsculas si es necesario"""
+        if isinstance(v, str):
+            return v.upper()
+        elif hasattr(v, 'value'):
+            return v.value.upper()
+        return v
     
     class Config:
         from_attributes = True

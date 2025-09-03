@@ -150,96 +150,63 @@ async def registrar_entrada(
     - Requiere rol: user o admin
     - Usuarios solo pueden hacer entradas en productos de sus paises asignados
     """
-    try:
-        print(f"[ENTRADA_DEBUG] Starting entrada registration")
-        print(f"[ENTRADA_DEBUG] User ID: {current_user.id}")
-        print(f"[ENTRADA_DEBUG] User Role: {current_user.role.name if current_user.role else 'No role'}")
-        print(f"[ENTRADA_DEBUG] User is_admin: {current_user.is_admin}")
-        print(f"[ENTRADA_DEBUG] User is_user: {current_user.is_user}")
-        print(f"[ENTRADA_DEBUG] Entrada data: {entrada_data}")
-        
-        # Agregar headers CORS explícitos
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        
-        # Validar permisos
-        if not (current_user.is_admin or current_user.is_user):
-            print(f"[ENTRADA_DEBUG] Permission denied - user role: {current_user.role.name if current_user.role else 'No role'}")
+    # Agregar headers CORS explícitos
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    # Validar permisos
+    if not (current_user.is_admin or current_user.is_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos para registrar entradas"
+        )
+    
+    # Verificar acceso al producto (se hace en el servicio)
+    if not current_user.is_admin:
+        # Para usuarios normales, verificar que el producto pertenece a sus paises asignados
+        from app.models.product import Product
+        product = db.query(Product).filter(Product.id == entrada_data.product_id).first()
+        if not product:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="No tienes permisos para registrar entradas"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Producto no encontrado"
             )
         
-        print(f"[ENTRADA_DEBUG] Permissions validated")
-        
-        # Verificar acceso al producto (se hace en el servicio)
-        if not current_user.is_admin:
-            print(f"[ENTRADA_DEBUG] Checking product access for non-admin user")
-            # Para usuarios normales, verificar que el producto pertenece a sus paises asignados
-            from app.models.product import Product
-            product = db.query(Product).filter(Product.id == entrada_data.product_id).first()
-            if not product:
-                print(f"[ENTRADA_DEBUG] Product not found: {entrada_data.product_id}")
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Producto no encontrado"
-                )
-            
-            user_country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
-            print(f"[ENTRADA_DEBUG] User country IDs: {user_country_ids}")
-            print(f"[ENTRADA_DEBUG] Product country ID: {product.country_id}")
-            
-            if product.country_id not in user_country_ids:
-                print(f"[ENTRADA_DEBUG] No access to product country")
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="No tienes permisos para hacer entradas en este producto"
-                )
-        
-        print(f"[ENTRADA_DEBUG] Product access validated, calling service")
-        
-        # Registrar entrada
-        movement = MovementService.create_entrada(
-            db=db,
-            entrada_data=entrada_data,
-            user_id=current_user.id
-        )
-        
-        print(f"[ENTRADA_DEBUG] Movement created successfully: {movement.id}")
-        
-        # Preparar respuesta
-        return MovementResponse(
-            id=movement.id,
-            tipo=movement.tipo,
-            cantidad=movement.cantidad,
-            cantidad_anterior=movement.cantidad_anterior,
-            cantidad_nueva=movement.cantidad_nueva,
-            responsable=movement.responsable,
-            motivo=movement.motivo,
-            observaciones=movement.observaciones,
-            fecha_movimiento=movement.fecha_movimiento,
-            product_id=movement.product_id,
-            user_id=movement.user_id,
-            created_at=movement.created_at,
-            updated_at=movement.updated_at or movement.created_at,
-            product_codigo=movement.product.codigo if movement.product else None,
-            product_nombre=movement.product.nombre if movement.product else None,
-            user_email=movement.user.email if movement.user else None,
-            user_full_name=movement.user.full_name if movement.user else None
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[ENTRADA_DEBUG] Unexpected error: {str(e)}")
-        print(f"[ENTRADA_DEBUG] Error type: {type(e).__name__}")
-        import traceback
-        print(f"[ENTRADA_DEBUG] Traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
+        user_country_ids = current_user.country_ids or ([current_user.country_id] if current_user.country_id else [])
+        if product.country_id not in user_country_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permisos para hacer entradas en este producto"
+            )
+    
+    # Registrar entrada
+    movement = MovementService.create_entrada(
+        db=db,
+        entrada_data=entrada_data,
+        user_id=current_user.id
+    )
+    
+    # Preparar respuesta
+    return MovementResponse(
+        id=movement.id,
+        tipo=movement.tipo,
+        cantidad=movement.cantidad,
+        cantidad_anterior=movement.cantidad_anterior,
+        cantidad_nueva=movement.cantidad_nueva,
+        responsable=movement.responsable,
+        motivo=movement.motivo,
+        observaciones=movement.observaciones,
+        fecha_movimiento=movement.fecha_movimiento,
+        product_id=movement.product_id,
+        user_id=movement.user_id,
+        created_at=movement.created_at,
+        updated_at=movement.updated_at or movement.created_at,
+        product_codigo=movement.product.codigo if movement.product else None,
+        product_nombre=movement.product.nombre if movement.product else None,
+        user_email=movement.user.email if movement.user else None,
+        user_full_name=movement.user.full_name if movement.user else None
+    )
 
 @router.post("/salida", response_model=MovementResponse, status_code=status.HTTP_201_CREATED)
 async def registrar_salida(
