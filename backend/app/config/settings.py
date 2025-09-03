@@ -1,11 +1,12 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import Optional, List, Union
 import json
 import os
 
 class Settings(BaseSettings):
-    # Base de datos - SOLO para desarrollo local
-    DATABASE_URL: str = os.getenv("DATABASE_URL_LOCAL", "postgresql://postgres:password@localhost:5432/muestras_univar")
+    # Base de datos - SQLite para desarrollo, PostgreSQL para producción
+    DATABASE_URL: str = os.getenv("DATABASE_URL_LOCAL", "sqlite:///./muestras_univar.db")
     DATABASE_URL_PRODUCTION: Optional[str] = os.getenv("DATABASE_URL_PRODUCTION")
     
     # Configuración de zona horaria
@@ -82,10 +83,12 @@ class Settings(BaseSettings):
                 return self.DATABASE_URL_PRODUCTION
         return self.DATABASE_URL
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = 'utf-8'
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+        "extra": "ignore"
+    }
 
 # Instancia global de configuración
 settings = Settings()

@@ -6,10 +6,12 @@ from app.config.settings import settings
 from app.config.database import engine
 from app.api.v1.endpoints import auth, products, users, movements, reports, countries, categories, statistics
 from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+# from app.core.auth.router import get_auth_routers  # TODO: Enable after database migration
 from slowapi.errors import RateLimitExceeded
 # Importar modelos para SQLAlchemy
 from app import models
 from app.models.base import BaseModel
+# from app.core.auth.models import User  # TODO: Enable after database migration
 import os
 
 # Configurar zona horaria para Centroamerica
@@ -139,11 +141,19 @@ app.add_middleware(
     max_age=86400  # Cache preflight requests for 24 hours
 )
 
-# Incluir rutas de autenticacion
+# === ENTERPRISE AUTHENTICATION ROUTERS ===
+# FastAPI-Users integration (temporarily commented for testing)
+# TODO: Enable after database migration
+# auth_routers = get_auth_routers()
+# for router, router_config in auth_routers:
+#     app.include_router(router, **router_config)
+
+# Legacy authentication (keeping for backward compatibility during migration)
 app.include_router(
     auth.router,
-    prefix=f"{settings.API_V1_PREFIX}/auth",
-    tags=["authentication"]
+    prefix=f"{settings.API_V1_PREFIX}/auth/legacy",
+    tags=["legacy-authentication"],
+    deprecated=True
 )
 
 # Incluir rutas de productos
@@ -208,9 +218,15 @@ async def startup_event():
         print(f"[STARTUP] CORS Debug - Settings origins: {settings.cors_origins}")
         print(f"[STARTUP] CORS Debug - Allow all: {settings.CORS_ALLOW_ALL}")
         
-        # Crear todas las tablas
+        # Create all tables (sync and async models)
         BaseModel.metadata.create_all(bind=engine)
         print("[STARTUP] Tables created successfully")
+        
+        # Initialize async database tables for FastAPI-Users (temporarily disabled)
+        # TODO: Enable after database migration
+        # from app.config.database import DatabaseManager
+        # await DatabaseManager.create_all_tables()
+        # print("[STARTUP] Async tables created successfully")
         
         # Ejecutar seeds básicos
         from app.db.seeds.countries import seed_countries
