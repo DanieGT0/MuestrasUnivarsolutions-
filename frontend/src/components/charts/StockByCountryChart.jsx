@@ -168,12 +168,14 @@ const StockByCountryChart = () => {
 
   // Calculate SVG path for donut chart
   const createDonutPath = (percentage, startAngle = 0) => {
+    if (percentage <= 0) return '';
+    
     const radius = 80;
     const innerRadius = 60;
     const centerX = 100;
     const centerY = 100;
     
-    const angle = (percentage / 100) * 360;
+    const angle = Math.min((percentage / 100) * 360, 359.99); // Evitar problemas con 360°
     const endAngle = startAngle + angle;
     
     const startAngleRad = (startAngle * Math.PI) / 180;
@@ -190,6 +192,11 @@ const StockByCountryChart = () => {
     const y3 = centerY + innerRadius * Math.sin(endAngleRad);
     const x4 = centerX + innerRadius * Math.cos(startAngleRad);
     const y4 = centerY + innerRadius * Math.sin(startAngleRad);
+    
+    if (angle >= 359.99) {
+      // Círculo completo, dibujarlo como dos semicírculos
+      return `M ${x1} ${y1} A ${radius} ${radius} 0 1 1 ${centerX + radius * Math.cos((startAngle + 180) * Math.PI / 180)} ${centerY + radius * Math.sin((startAngle + 180) * Math.PI / 180)} A ${radius} ${radius} 0 1 1 ${x1} ${y1} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 1 0 ${centerX + innerRadius * Math.cos((startAngle + 180) * Math.PI / 180)} ${centerY + innerRadius * Math.sin((startAngle + 180) * Math.PI / 180)} A ${innerRadius} ${innerRadius} 0 1 0 ${x4} ${y4} Z`;
+    }
     
     return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
   };

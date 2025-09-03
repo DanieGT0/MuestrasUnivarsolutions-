@@ -11,12 +11,14 @@ const StockByCategoryChart = ({ data, title = "Stock por Categoría" }) => {
 
   // Función para crear el path del gráfico donut
   const createDonutPath = (percentage, startAngle = 0) => {
+    if (percentage <= 0) return '';
+    
     const radius = 80;
     const innerRadius = 60;
     const centerX = 100;
     const centerY = 100;
     
-    const angle = (percentage / 100) * 360;
+    const angle = Math.min((percentage / 100) * 360, 359.99); // Evitar problemas con 360°
     const endAngle = startAngle + angle;
     
     const startAngleRad = (startAngle * Math.PI) / 180;
@@ -33,6 +35,11 @@ const StockByCategoryChart = ({ data, title = "Stock por Categoría" }) => {
     const y3 = centerY + innerRadius * Math.sin(endAngleRad);
     const x4 = centerX + innerRadius * Math.cos(startAngleRad);
     const y4 = centerY + innerRadius * Math.sin(startAngleRad);
+    
+    if (angle >= 359.99) {
+      // Círculo completo, dibujarlo como dos semicírculos
+      return `M ${x1} ${y1} A ${radius} ${radius} 0 1 1 ${centerX + radius * Math.cos((startAngle + 180) * Math.PI / 180)} ${centerY + radius * Math.sin((startAngle + 180) * Math.PI / 180)} A ${radius} ${radius} 0 1 1 ${x1} ${y1} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 1 0 ${centerX + innerRadius * Math.cos((startAngle + 180) * Math.PI / 180)} ${centerY + innerRadius * Math.sin((startAngle + 180) * Math.PI / 180)} A ${innerRadius} ${innerRadius} 0 1 0 ${x4} ${y4} Z`;
+    }
     
     return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
   };
@@ -78,15 +85,37 @@ const StockByCategoryChart = ({ data, title = "Stock por Categoría" }) => {
               const angle = currentAngle;
               currentAngle += (item.percentage / 100) * 360;
               
+              console.log(`Category: ${item.category_name}, Percentage: ${item.percentage}%, Path: ${path}`);
+              
+              if (!path || path === '') {
+                console.warn(`Empty path for category: ${item.category_name}`);
+                return null;
+              }
+              
               return (
                 <path
                   key={index}
                   d={path}
                   fill={color}
+                  stroke={isDarkMode ? "#374151" : "#ffffff"}
+                  strokeWidth="1"
                   className="transition-all duration-300 hover:opacity-80"
+                  title={`${item.category_name}: ${item.total_stock} unidades (${item.percentage.toFixed(1)}%)`}
                 />
               );
             })}
+            
+            {/* Círculo de respaldo si no hay datos */}
+            {data.length === 0 && (
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="none"
+                stroke={isDarkMode ? "#4B5563" : "#E5E7EB"}
+                strokeWidth="20"
+              />
+            )}
           </svg>
           
           {/* Texto central */}
@@ -115,19 +144,27 @@ const StockByCategoryChart = ({ data, title = "Stock por Categoría" }) => {
                 style={{ backgroundColor: colors[index % colors.length] }}
               ></div>
               <div>
-                <span className="text-sm font-medium text-gray-800">
+                <span className={`text-sm font-medium ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>
                   {item.category_name}
                 </span>
-                <div className="text-xs text-gray-500">
+                <div className={`text-xs ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
                   {item.total_products} productos
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm font-semibold text-gray-800">
+              <div className={`text-sm font-semibold ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-800'
+              }`}>
                 {item.total_stock.toLocaleString()}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 {item.percentage.toFixed(1)}%
               </div>
             </div>
@@ -136,19 +173,29 @@ const StockByCategoryChart = ({ data, title = "Stock por Categoría" }) => {
       </div>
       
       {/* Resumen en la parte inferior */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
+      <div className={`mt-6 pt-4 border-t ${
+        isDarkMode ? 'border-gray-600' : 'border-gray-200'
+      }`}>
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-gray-800">
+            <div className={`text-lg font-bold ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-800'
+            }`}>
               {data.reduce((sum, item) => sum + item.total_products, 0)}
             </div>
-            <div className="text-xs text-gray-500">Total Productos</div>
+            <div className={`text-xs ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>Total Productos</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-gray-800">
+            <div className={`text-lg font-bold ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-800'
+            }`}>
               {data.length}
             </div>
-            <div className="text-xs text-gray-500">Categorías</div>
+            <div className={`text-xs ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>Categorías</div>
           </div>
         </div>
       </div>
